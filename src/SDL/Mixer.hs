@@ -28,8 +28,6 @@ import Foreign.Ptr
 import SDL.Exception
 
 import qualified SDL.Raw.Mixer as Raw
-import qualified SDL.Raw.Mixer.Enum as Raw
-import qualified SDL.Raw.Mixer.Types as Raw
 
 foldFlags :: (Bits b, Foldable f, Num b) => (flag -> b) -> f flag -> b
 foldFlags f = foldl (\a b -> a .|. f b) 0

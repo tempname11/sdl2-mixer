@@ -8,6 +8,7 @@ import System.Environment
 
 main :: IO ()
 main = do
+  -- read arguments
   args <- getArgs
 
   let file = case args of
@@ -44,6 +45,7 @@ main = do
   -- close device
   Mixer.closeAudio
 
+  -- quit
   Mixer.quit
   SDL.quit
 
