@@ -1,4 +1,4 @@
-import qualified SDL.Mixer as Mixer
+import qualified SDL.Raw.Mixer as Mixer
 import qualified SDL
 
 import Control.Applicative
@@ -16,24 +16,27 @@ main = do
 
   -- initialize libraries
   SDL.initialize [SDL.InitAudio]
-  Mixer.initialize [Mixer.InitMP3]
+  _ <- Mixer.init Mixer.MIX_INIT_MP3
 
   let rate = 22050
-      format = Mixer.FormatS16_Sys
+      format = Mixer.AUDIO_S16SYS
       channels = 2
       bufsize = 4096
 
   -- open device
-  Mixer.openAudio rate format channels bufsize
+  result <- Mixer.openAudio rate format channels bufsize
+  assert $ result == 0
 
   -- open file
-  sound <- Mixer.load file
+  sound <- withCString file $ \cstr -> Mixer.loadWav cstr
+  assert $ sound /= nullPtr
   
   -- play file
-  channel <- Mixer.playChannel Mixer.AnyChannel sound (Mixer.Repeat 0)
+  channel <- Mixer.playChannel (-1) sound 0
+  assert $ channel /= -1
 
   -- wait until finished
-  whileTrueM $ Mixer.playing channel
+  whileTrueM $ (/= 0) <$> Mixer.playing channel
 
  -- free resources
   Mixer.freeChunk sound
@@ -43,6 +46,11 @@ main = do
 
   Mixer.quit
   SDL.quit
+
+assert :: Bool -> IO ()
+assert x = if x
+           then return ()
+           else undefined
 
 whileTrueM :: Monad m => m Bool -> m ()
 whileTrueM cond = do
