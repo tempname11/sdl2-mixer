@@ -1,0 +1,57 @@
+name:                sdl2-mixer
+version:             0.1.0
+synopsis:            Low-level bindings to the SDL_mixer library (version 2.0.0).
+description:
+  This package contains low-level bindings to the SDL_mixer 2 library.
+
+  The 'SDL.Raw.Mixer' namespace contains (an incomplete subset of) an almost 1-1
+  translation of the C API into Haskell FFI calls, analogous to the SDL.Raw
+  namespace of the 'sdl2' package.
+
+license:             BSD3
+license-file:        LICENSE
+author:              Vladimir Semyonov
+maintainer:          tempname011@gmail.com
+copyright:           Copyright © 2015  Vladimir Semyonov
+category:            Sound
+build-type:          Simple
+cabal-version:       >= 1.10
+
+library
+  ghc-options: -Wall
+
+  exposed-modules:
+    SDL.Raw.Mixer
+    SDL.Raw.Mixer.Enum
+    SDL.Raw.Mixer.Types
+
+  hs-source-dirs:
+    src/
+
+  includes:
+    SDL_mixer.h
+
+  extra-libraries:
+    SDL2_mixer
+
+  pkgconfig-depends:
+    SDL2_mixer >= 2.0.0
+
+  build-depends:
+    base >= 4.7 && < 5,
+    sdl2 >= 2.0.0,
+    transformers >= 0.2 && < 0.5
+
+  default-language:
+    Haskell2010
+
+executable example-basic
+  build-depends:
+    base >= 4.7 && < 5,
+    sdl2 >= 2.0.0,
+    sdl2-mixer
+
+  hs-source-dirs: examples
+  main-is: Basic.hs
+  default-language: Haskell2010
+  ghc-options: -Wall

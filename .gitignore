@@ -1,0 +1,5 @@
+/dist
+*.mp3
+*.wav
+/.cabal-sandbox
+/cabal.sandbox.config
