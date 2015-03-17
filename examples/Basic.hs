@@ -16,19 +16,14 @@ main = do
   SDL.initialize [SDL.InitAudio]
   Mixer.initialize [Mixer.InitMP3]
 
-  let rate = 22050
-      format = Mixer.FormatS16_Sys
-      channels = 2
-      bufsize = 4096
-
   -- open device
-  Mixer.openAudio rate format channels bufsize
+  Mixer.openAudio Mixer.defaultConfig
 
   -- open file
   sound <- Mixer.load file
   
   -- play file
-  channel <- Mixer.playChannel Mixer.AnyChannel sound (Mixer.Repeat 0)
+  channel <- Mixer.play sound
 
   -- wait until finished
   whileTrueM $ Mixer.playing channel

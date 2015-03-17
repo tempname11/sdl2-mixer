@@ -4,12 +4,17 @@ module SDL.Mixer (
   quit,
   openAudio,
   load,
+  play,
   playChannel,
   playing,
   playingCount,
   freeChunk,
   closeAudio,
 
+  defaultConfig,
+  AudioConfig(..),
+
+  Speakers(..),
   Format(..),
   InitFlag(..),
   ChannelChoice(..),
@@ -82,15 +87,39 @@ formatConvert = go where
   go FormatU16_Sys = Raw.AUDIO_U16SYS
   go FormatS16_Sys = Raw.AUDIO_S16SYS
 
-openAudio :: (Functor m, MonadIO m) => Int -> Format -> Int -> Int -> m ()
-openAudio frequency format channels chunksize =
+defaultConfig :: AudioConfig
+defaultConfig = AudioConfig
+  { audioFrequency = 44100
+  , audioFormat = FormatS16_Sys
+  , audioChannels = Stereo
+  , audioChunkSize = 4096
+  }
+
+data Speakers
+  = Stereo
+  | Mono
+  deriving (Bounded, Enum, Eq, Ord, Read, Show)
+
+speakersConvert :: Speakers -> CInt
+speakersConvert Stereo = 2
+speakersConvert Mono   = 1
+
+data AudioConfig = AudioConfig
+  { audioFrequency :: Int
+  , audioFormat    :: Format
+  , audioChannels  :: Speakers
+  , audioChunkSize :: Int
+  } deriving (Eq, Ord, Read, Show)
+
+openAudio :: (Functor m, MonadIO m) => AudioConfig -> m ()
+openAudio config =
   throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
-    Raw.openAudio frequency' format' channels' chunksize'
+    Raw.openAudio frequency format channels chunkSize
     where
-      frequency' = fromIntegral frequency
-      format' = formatConvert format
-      channels' = fromIntegral channels
-      chunksize' = fromIntegral chunksize
+      frequency = fromIntegral     (audioFrequency config)
+      format    = formatConvert    (audioFormat config)
+      channels  = speakersConvert  (audioChannels config)
+      chunkSize = fromIntegral     (audioChunkSize config)
 
 newtype Chunk = Chunk (Ptr Raw.Chunk)
 
@@ -109,7 +138,11 @@ data ChannelChoice
 
 data Loops
   = Infinite
+  | Once
   | Repeat Int
+
+play :: (Functor m, MonadIO m) => Chunk -> m Channel
+play chunk = playChannel AnyChannel chunk Once
 
 playChannel :: (Functor m, MonadIO m) => ChannelChoice -> Chunk -> Loops -> m Channel
 playChannel channel chunk loops =
@@ -123,7 +156,8 @@ playChannel channel chunk loops =
                     SpecificChannel (Channel n) -> n
     loops' = case loops of
                   Infinite             -> (-1)
-                  Repeat n | n >= 0    -> fromIntegral n
+                  Once                 -> 0
+                  Repeat n | n > 1     -> fromIntegral (n - 1)
                            | otherwise -> undefined
 
 playing :: (Functor m, MonadIO m) => Channel -> m Bool
