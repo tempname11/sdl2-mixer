@@ -1,5 +1,15 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module SDL.Raw.Mixer.Types (
+  Tag,
+  Channel,
+  Fading,
+  ChannelFinishedCallback,
+  EffectCallback,
+  EffectDoneCallback,
+  MixCallback,
+  MusicFinishedCallback,
+  Music,
+  MusicType,
   Chunk(..)
 ) where
 
@@ -10,6 +20,17 @@ import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import Foreign.Storable
+
+type Tag = CInt
+type Channel = CInt
+type Fading = (#type Mix_Fading)
+type ChannelFinishedCallback = FunPtr (Channel -> IO ())
+type EffectCallback = FunPtr (Channel -> Ptr () -> CInt -> Ptr () -> IO ())
+type EffectDoneCallback = FunPtr (Channel -> Ptr () -> IO ())
+type MixCallback = FunPtr (Ptr () -> Ptr Word8 -> CInt -> IO ())
+type MusicFinishedCallback = FunPtr (IO ())
+data Music
+type MusicType = (#type Mix_MusicType)
 
 data Chunk = Chunk
   { chunkAllocated :: CInt

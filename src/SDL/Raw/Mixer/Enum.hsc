@@ -18,8 +18,12 @@ module SDL.Raw.Mixer.Enum (
   pattern AUDIO_S16SYS,
   pattern MIX_DEFAULT_FORMAT,
 
+  pattern SDL_MIXER_MAJOR_VERSION,
+  pattern SDL_MIXER_MINOR_VERSION,
+  pattern SDL_MIXER_PATCHLEVEL,
+
   InitFlag,
-  Format
+  Format,
 ) where
 
 #include "SDL_Mixer.h"
@@ -46,3 +50,8 @@ pattern AUDIO_S16 = (#const AUDIO_S16) :: Format
 pattern AUDIO_U16SYS = (#const AUDIO_U16SYS) :: Format
 pattern AUDIO_S16SYS = (#const AUDIO_S16SYS) :: Format
 pattern MIX_DEFAULT_FORMAT = (#const MIX_DEFAULT_FORMAT) :: Format
+
+pattern SDL_MIXER_MAJOR_VERSION = (#const SDL_MIXER_MAJOR_VERSION) :: Word8
+pattern SDL_MIXER_MINOR_VERSION = (#const SDL_MIXER_MINOR_VERSION) :: Word8
+pattern SDL_MIXER_PATCHLEVEL = (#const SDL_MIXER_PATCHLEVEL) :: Word8
+
