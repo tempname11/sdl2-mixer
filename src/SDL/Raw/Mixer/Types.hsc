@@ -1,5 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module SDL.Raw.Mixer.Types (
+  InitFlag,
+  Format,
   Tag,
   Channel,
   Fading,
@@ -10,7 +12,7 @@ module SDL.Raw.Mixer.Types (
   MusicFinishedCallback,
   Music,
   MusicType,
-  Chunk(..)
+  Chunk(..),
 ) where
 
 #include "SDL_Mixer.h"
@@ -20,6 +22,9 @@ import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import Foreign.Storable
+
+type InitFlag = CInt
+type Format = Word16
 
 type Tag = CInt
 type Channel = CInt

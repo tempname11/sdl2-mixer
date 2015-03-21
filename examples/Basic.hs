@@ -1,41 +1,44 @@
-import qualified SDL.Mixer as Mixer
+import qualified SDL.Mixer as Mix
 import qualified SDL
 
 import System.Environment
+import System.Exit
 
 main :: IO ()
 main = do
   -- read arguments
-  args <- getArgs
-
-  let file = case args of
-             [arg] -> arg
-             _ -> "sound.wav"
+  fileName <- do
+    args <- getArgs
+    case args of
+      [arg] -> return arg
+      _ -> do
+        putStrLn "Usage: <cmd> <sound filename>"
+        exitWith $ ExitFailure 1
 
   -- initialize libraries
   SDL.initialize [SDL.InitAudio]
-  Mixer.initialize [Mixer.InitMP3]
+  Mix.initialize [Mix.InitMP3]
 
   -- open device
-  Mixer.openAudio Mixer.defaultConfig
+  Mix.openAudio Mix.defaultSpec 256
 
   -- open file
-  sound <- Mixer.load file
+  sound <- Mix.load fileName
   
   -- play file
-  channel <- Mixer.play sound
+  channel <- Mix.play sound
 
   -- wait until finished
-  whileTrueM $ Mixer.playing channel
+  whileTrueM $ Mix.playing channel
 
  -- free resources
-  Mixer.freeChunk sound
+  Mix.freeChunk sound
 
   -- close device
-  Mixer.closeAudio
+  Mix.closeAudio
 
   -- quit
-  Mixer.quit
+  Mix.quit
   SDL.quit
 
 whileTrueM :: Monad m => m Bool -> m ()

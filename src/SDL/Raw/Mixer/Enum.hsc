@@ -21,18 +21,12 @@ module SDL.Raw.Mixer.Enum (
   pattern SDL_MIXER_MAJOR_VERSION,
   pattern SDL_MIXER_MINOR_VERSION,
   pattern SDL_MIXER_PATCHLEVEL,
-
-  InitFlag,
-  Format,
 ) where
 
 #include "SDL_Mixer.h"
 
-import Foreign.C.Types
+import SDL.Raw.Mixer.Types
 import Data.Word
-
-type InitFlag = CInt
-type Format = Word16
 
 pattern MIX_INIT_FLAC = (#const MIX_INIT_FLAC) :: InitFlag
 pattern MIX_INIT_MOD = (#const MIX_INIT_MOD) :: InitFlag
