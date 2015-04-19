@@ -24,7 +24,7 @@ main = do
 
   -- open file
   sound <- Mix.load fileName
-  
+
   -- play file
   channel <- Mix.play sound
 
@@ -46,4 +46,3 @@ whileTrueM cond = do
   loop <- cond
   if loop then whileTrueM cond
           else return ()
-

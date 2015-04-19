@@ -26,7 +26,6 @@ module SDL.Mixer (
 ) where
 
 import Prelude hiding (foldl)
-import Control.Applicative
 import Control.Monad.IO.Class
 import Data.Bits
 import Data.Foldable

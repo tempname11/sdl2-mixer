@@ -1,7 +1,6 @@
 import qualified SDL.Raw.Mixer as Mix
 import qualified SDL
 
-import Control.Applicative
 import Foreign.C.String
 import Foreign.Ptr
 import System.Environment
@@ -34,7 +33,7 @@ main = do
   -- open file
   sound <- withCString fileName $ \cstr -> Mix.loadWav cstr
   assert $ sound /= nullPtr
-  
+
   -- play file
   channel <- Mix.playChannel (-1) sound 0
   assert $ channel /= -1
@@ -62,4 +61,3 @@ whileTrueM cond = do
   loop <- cond
   if loop then whileTrueM cond
           else return ()
-
