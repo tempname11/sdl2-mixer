@@ -34,6 +34,7 @@ module SDL.Raw.Mixer
   , pattern MIX_INIT_FLUIDSYNTH
   , quit
   , Format
+  , pattern MIX_DEFAULT_FREQUENCY
   , openAudio
   , pattern AUDIO_U8
   , pattern AUDIO_S8
@@ -190,6 +191,8 @@ liftF "quit" "Mix_Quit"
   [t|IO ()|]
 
 type Format = Word16
+
+pattern MIX_DEFAULT_FREQUENCY = (#const MIX_DEFAULT_FREQUENCY)
 
 liftF "openAudio" "Mix_OpenAudio"
   [t|CInt -> Format -> CInt -> CInt -> IO CInt|]
