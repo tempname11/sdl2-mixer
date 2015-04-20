@@ -103,6 +103,7 @@ wordToFormat = \case
   SDL.Raw.Mixer.AUDIO_S16SYS -> FormatS16_Sys
   _ -> error "SDL.Mixer.wordToFormat: unknown Format."
 
+-- | An audio configuration. Use this with 'openAudio'.
 data AudioSpec = AudioSpec
   { audioFrequency :: Int    -- ^ Sampling frequency.
   , audioFormat    :: Format -- ^ Output sample format.
@@ -115,6 +116,7 @@ instance Default AudioSpec where
                   , audioOutput    = Stereo
                   }
 
+-- | The number of sound channels in output.
 data Output = Mono | Stereo
   deriving (Eq, Ord, Bounded, Read, Show)
 
