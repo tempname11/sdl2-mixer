@@ -46,12 +46,6 @@ import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0)
 import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
 
--- | Gets the major, minor, patch versions of the linked @SDL2_mixer@ library.
-version :: (Integral a, MonadIO m) => m (a, a, a)
-version = liftIO $ do
-  SDL.Raw.Version major minor patch <- peek =<< SDL.Raw.Mixer.getVersion
-  return (fromIntegral major, fromIntegral minor, fromIntegral patch)
-
 -- | Initialize the library by loading support for a certain set of
 -- sample/music formats. You may call this function multiple times. Note that
 -- calling this is not strictly necessary: support for a certain format will be
@@ -86,6 +80,41 @@ initToCInt = \case
 -- | Cleans up any loaded libraries, freeing memory.
 quit :: MonadIO m => m ()
 quit = SDL.Raw.Mixer.quit -- FIXME: May not free all init'd libs! Check docs.
+
+-- | Gets the major, minor, patch versions of the linked @SDL2_mixer@ library.
+version :: (Integral a, MonadIO m) => m (a, a, a)
+version = liftIO $ do
+  SDL.Raw.Version major minor patch <- peek =<< SDL.Raw.Mixer.getVersion
+  return (fromIntegral major, fromIntegral minor, fromIntegral patch)
+
+-- | Initializes the @SDL2_mixer@ API. This should be the first function you
+-- call after intializing @SDL@ itself with 'SDL.Init.InitAudio'.
+openAudio :: (Functor m, MonadIO m) => Audio -> ChunkSize -> m ()
+openAudio (Audio {..}) chunkSize =
+  throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
+    SDL.Raw.Mixer.openAudio
+      (fromIntegral audioFrequency)
+      (formatToWord audioFormat)
+      (outputToCInt audioOutput)
+      (fromIntegral chunkSize)
+
+-- | An audio configuration. Use this with 'openAudio'.
+data Audio = Audio
+  { audioFrequency :: Int    -- ^ A sampling frequency.
+  , audioFormat    :: Format -- ^ An output sample format.
+  , audioOutput    :: Output -- ^ 'Mono' or 'Stereo' output.
+  } deriving (Eq, Read, Show)
+
+instance Default Audio where
+  def = Audio { audioFrequency = SDL.Raw.Mixer.MIX_DEFAULT_FREQUENCY
+              , audioFormat    = FormatS16_Sys
+              , audioOutput    = Stereo
+              }
+
+-- | The size of each mixed sample. The smaller this is, the more your hooks
+-- will be called. If this is made too small on a slow system, the sounds may
+-- skip. If made too large, sound effects could lag.
+type ChunkSize = Int
 
 -- | A sample format.
 data Format
@@ -122,19 +151,6 @@ wordToFormat = \case
   SDL.Raw.Mixer.AUDIO_S16SYS -> FormatS16_Sys
   _ -> error "SDL.Mixer.wordToFormat: unknown Format."
 
--- | An audio configuration. Use this with 'openAudio'.
-data Audio = Audio
-  { audioFrequency :: Int    -- ^ A sampling frequency.
-  , audioFormat    :: Format -- ^ An output sample format.
-  , audioOutput    :: Output -- ^ 'Mono' or 'Stereo' output.
-  } deriving (Eq, Read, Show)
-
-instance Default Audio where
-  def = Audio { audioFrequency = SDL.Raw.Mixer.MIX_DEFAULT_FREQUENCY
-              , audioFormat    = FormatS16_Sys
-              , audioOutput    = Stereo
-              }
-
 -- | The number of sound channels in output.
 data Output = Mono | Stereo
   deriving (Eq, Ord, Bounded, Read, Show)
@@ -149,27 +165,6 @@ cIntToOutput = \case
   1 -> Mono
   2 -> Stereo
   _ -> error "SDL.Mixer.cIntToOutput: unknown number of channels."
-
--- | The size of each mixed sample. The smaller this is, the more your hooks
--- will be called. If this is made too small on a slow system, the sounds may
--- skip. If made too large, sound effects could lag.
-type ChunkSize = Int
-
--- | Initializes the @SDL2_mixer@ API. This should be the first function you
--- call after intializing @SDL@ itself with 'SDL.Init.InitAudio'.
-openAudio :: (Functor m, MonadIO m) => Audio -> ChunkSize -> m ()
-openAudio (Audio {..}) chunkSize =
-  throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
-    SDL.Raw.Mixer.openAudio
-      (fromIntegral audioFrequency)
-      (formatToWord audioFormat)
-      (outputToCInt audioOutput)
-      (fromIntegral chunkSize)
-
--- | Shut down and clean up the @SDL2_mixer@ API. After calling this, all audio
--- stops and no functions except 'openAudio' should be used.
-closeAudio :: MonadIO m => m ()
-closeAudio = SDL.Raw.Mixer.closeAudio
 
 -- | Get the audio format in use by the opened audio device. This may or may
 -- not match the 'Audio' you asked for when calling 'openAudio'.
@@ -186,8 +181,10 @@ queryAudio =
             <*> (wordToFormat <$> peek form)
             <*> (cIntToOutput <$> peek chan)
 
--- -- | An audio chunk.
--- newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
+-- | Shut down and clean up the @SDL2_mixer@ API. After calling this, all audio
+-- stops and no functions except 'openAudio' should be used.
+closeAudio :: MonadIO m => m ()
+closeAudio = SDL.Raw.Mixer.closeAudio
 
 -- Chunks
 -- TODO: getNumChunkDecoders
@@ -270,6 +267,9 @@ queryAudio =
 -- TODO: setSoundFonts
 -- TODO: getSoundFonts
 -- TODO: eachSoundFont
+
+-- -- | An audio chunk.
+-- newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
 
 -- load :: (Functor m, MonadIO m) => FilePath -> m Chunk
 -- load filePath =
