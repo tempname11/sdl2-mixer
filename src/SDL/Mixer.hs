@@ -286,9 +286,7 @@ instance Loadable Chunk where
 
 instance HasVolume Chunk where
   getVolume   (Chunk p) = fmap fromIntegral $ SDL.Raw.Mixer.volumeChunk p (-1)
-  setVolume v (Chunk p) =
-    fmap fromIntegral .
-      SDL.Raw.Mixer.volumeChunk p $ volumeToCInt v
+  setVolume v (Chunk p) = void . SDL.Raw.Mixer.volumeChunk p $ volumeToCInt v
 
 -- | A channel for mixing. The first channel is 0, the second 1 and so on. Note
 -- that you cannot use these if you haven't created them in advance with
@@ -310,9 +308,7 @@ getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
 instance HasVolume Channel where
   getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
-  setVolume v (Channel c) =
-    fmap fromIntegral .
-      SDL.Raw.Mixer.volume c $ volumeToCInt v
+  setVolume v (Channel c) = void . SDL.Raw.Mixer.volume c $ volumeToCInt v
 
 -- Channels
 -- TODO: playChannel
