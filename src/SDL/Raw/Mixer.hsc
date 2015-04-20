@@ -28,8 +28,10 @@ module SDL.Raw.Mixer
   , init
   , pattern MIX_INIT_FLAC
   , pattern MIX_INIT_MOD
+  , pattern MIX_INIT_MODPLUG
   , pattern MIX_INIT_MP3
   , pattern MIX_INIT_OGG
+  , pattern MIX_INIT_FLUIDSYNTH
   , quit
   , Format
   , openAudio
@@ -153,10 +155,12 @@ type InitFlag = CInt
 liftF "init" "Mix_Init"
   [t|InitFlag -> IO CInt|]
 
-pattern MIX_INIT_FLAC = (#const MIX_INIT_FLAC)
-pattern MIX_INIT_MOD  = (#const MIX_INIT_MOD)
-pattern MIX_INIT_MP3  = (#const MIX_INIT_MP3)
-pattern MIX_INIT_OGG  = (#const MIX_INIT_OGG)
+pattern MIX_INIT_FLAC       = (#const MIX_INIT_FLAC)
+pattern MIX_INIT_MOD        = (#const MIX_INIT_MOD)
+pattern MIX_INIT_MODPLUG    = (#const MIX_INIT_MODPLUG)
+pattern MIX_INIT_MP3        = (#const MIX_INIT_MP3)
+pattern MIX_INIT_OGG        = (#const MIX_INIT_OGG)
+pattern MIX_INIT_FLUIDSYNTH = (#const MIX_INIT_FLUIDSYNTH)
 
 liftF "quit" "Mix_Quit"
   [t|IO ()|]
