@@ -11,6 +11,9 @@ main = do
   SDL.Mixer.initialize [SDL.Mixer.InitMP3]
   SDL.Mixer.openAudio def 256
 
+  putStr "Available chunk decoders: "
+  print =<< SDL.Mixer.chunkDecoders
+
   putStr "Available music decoders: "
   print =<< SDL.Mixer.musicDecoders
 

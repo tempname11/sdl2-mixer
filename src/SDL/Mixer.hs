@@ -30,8 +30,13 @@ module SDL.Mixer
   , queryAudio
   , closeAudio
 
+  -- * Chunks
+  , chunkDecoders
+  , Chunk(..)
+
   -- * Music
   , musicDecoders
+  , Music
 
   ) where
 
@@ -43,6 +48,7 @@ import Data.Foldable          (foldl)
 import Foreign.C.String       (peekCString)
 import Foreign.C.Types        (CInt)
 import Foreign.Marshal.Alloc  (alloca)
+import Foreign.Ptr            (Ptr)
 import Foreign.Storable       (Storable(..))
 import Prelude         hiding (foldl)
 import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0)
@@ -190,9 +196,21 @@ queryAudio =
 closeAudio :: MonadIO m => m ()
 closeAudio = SDL.Raw.Mixer.closeAudio
 
+-- | Returns the names of all chunk decoders currently available. These depend
+-- on the availability of shared libraries for each of the formats. The list
+-- may contain any of the following, and possibly others: @WAVE@, @AIFF@,
+-- @VOC@, @OFF@, @FLAC@, @MP3@.
+chunkDecoders :: MonadIO m => m [String]
+chunkDecoders =
+  liftIO $ do
+    num <- SDL.Raw.Mixer.getNumChunkDecoders
+    forM [0 .. num - 1] $ \i ->
+      SDL.Raw.Mixer.getChunkDecoder i >>= peekCString
+
+-- | A loaded audio chunk.
+newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk) deriving (Eq, Show)
+
 -- Chunks
--- TODO: getNumChunkDecoders
--- TODO: getChunkDecoder
 -- TODO: loadWAV
 -- TODO: loadWAV_RW
 -- TODO: quickLoadWAV
@@ -240,9 +258,10 @@ musicDecoders =
     forM [0 .. num - 1] $ \i ->
       SDL.Raw.Mixer.getMusicDecoder i >>= peekCString
 
+-- | A loaded music file.
+data Music
+
 -- Music
--- TODO: getNumMusicDecoders
--- TODO: getMusicDecoder
 -- TODO: loadMUS
 -- TODO: loadMUS_RW
 -- TODO: loadMUSType_RW
