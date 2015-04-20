@@ -96,6 +96,8 @@ module SDL.Raw.Mixer
   , getNumMusicDecoders
   , getMusicDecoder
   , loadMUS
+  , loadMUS_RW
+  , loadMUSType_RW
   , freeMusic
   , playMusic
   , fadeInMusic
@@ -336,6 +338,13 @@ data Music
 liftF "loadMUS" "Mix_LoadMUS"
   [t|CString -> IO (Ptr Music)|]
 
+liftF "loadMUS_RW" "Mix_LoadMUS_RW"
+  [t|Ptr RWops -> CInt -> IO (Ptr Music)|]
+
+type MusicType = (#type Mix_MusicType)
+
+liftF "loadMUSType_RW" "Mix_LoadMUSType_RW"
+  [t|Ptr RWops -> MusicType -> CInt -> IO (Ptr Music)|]
 liftF "freeMusic" "Mix_FreeMusic"
   [t|Ptr Music -> IO ()|]
 
@@ -377,8 +386,6 @@ liftF "fadeOutMusic" "Mix_FadeOutMusic"
 
 liftF "hookMusicFinished" "Mix_HookMusicFinished"
   [t|FunPtr (IO ()) -> IO ()|]
-
-type MusicType = (#type Mix_MusicType)
 
 liftF "getMusicType" "Mix_GetMusicType"
   [t|Ptr Music -> IO MusicType|]
