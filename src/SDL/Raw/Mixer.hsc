@@ -57,6 +57,7 @@ module SDL.Raw.Mixer
   , loadWAV_RW
   , quickLoadWAV
   , quickLoadRaw
+  , pattern MIX_MAX_VOLUME
   , volumeChunk
   , freeChunk
 
@@ -96,6 +97,7 @@ module SDL.Raw.Mixer
   -- * Music
   , getNumMusicDecoders
   , getMusicDecoder
+  , Music
   , loadMUS
   , loadMUS_RW
   , loadMUSType_RW
@@ -252,6 +254,8 @@ liftF "quickLoadWAV" "Mix_QuickLoad_WAV"
 
 liftF "quickLoadRaw" "Mix_QuickLoad_RAW"
   [t|Ptr Word8 -> IO (Ptr Chunk)|]
+
+pattern MIX_MAX_VOLUME = (#const MIX_MAX_VOLUME)
 
 liftF "volumeChunk" "Mix_VolumeChunk"
   [t|Ptr Chunk -> CInt -> IO CInt|]
