@@ -46,6 +46,14 @@ module SDL.Mixer
   , getChannels
   , pattern AnyChannel
 
+  -- * Playing Chunks
+  , Times
+  , pattern Once
+  , pattern Forever
+  , play
+  , Limit
+  , playLimit
+
   -- * Music
   , musicDecoders
   , Music(..)
@@ -71,7 +79,7 @@ import Foreign.Marshal.Alloc  (alloca)
 import Foreign.Ptr            (Ptr, castPtr)
 import Foreign.Storable       (Storable(..))
 import Prelude         hiding (foldl, readFile)
-import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0, throwIfNull)
+import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
 import SDL.Raw.Filesystem     (rwFromConstMem)
 
 import qualified SDL.Raw
@@ -322,9 +330,33 @@ instance HasVolume Channel where
   getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
   setVolume v (Channel c) = void . SDL.Raw.Mixer.volume c $ volumeToCInt v
 
+-- | How many times should a certain 'Chunk' be played?
+newtype Times = Times CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
+
+-- | A shorthand for playing once.
+pattern Once = 1 :: Times
+
+-- | A shorthand for looping a 'Chunk' forever.
+pattern Forever = 0 :: Times
+
+{-# INLINE play #-}
+-- | Play a 'Chunk', playing it a certain number of 'Times'. Returns the
+-- 'Channel' the 'Chunk' is played on.
+play :: MonadIO m => Channel -> Times -> Chunk -> m Channel
+play = playLimit (-1)
+
+-- | An upper limit, in milliseconds, on the playing of a certain 'Chunk'.
+newtype Limit = Limit CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
+
+-- | Same as 'play', but imposes an upper 'Limit' in milliseconds to how long
+-- the 'Chunk' can play. The playing may still stop before the limit is
+-- reached.
+playLimit :: MonadIO m => Limit -> Channel -> Times -> Chunk -> m Channel
+playLimit (Limit l) (Channel c) (Times t) (Chunk p) =
+  throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
+    fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) l
+
 -- Channels
--- TODO: playChannel
--- TODO: playChannelTimed
 -- TODO: fadeInChannel
 -- TODO: fadeInChannelTimed
 -- TODO: pause
