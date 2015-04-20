@@ -68,17 +68,16 @@ initToCInt = \case
 quit :: MonadIO m => m ()
 quit = SDL.Raw.Mixer.quit -- FIXME: May not free all init'd libs! Check docs.
 
+-- | A sample format.
 data Format
-  = FormatU8
-  | FormatS8
-  | FormatU16_LSB
-  | FormatS16_LSB
-  | FormatU16_MSB
-  | FormatS16_MSB
-  | FormatU16
-  | FormatS16
-  | FormatU16_Sys
-  | FormatS16_Sys
+  = FormatU8      -- ^ Unsigned 8-bit samples.
+  | FormatS8      -- ^ Signed 8-bit samples.
+  | FormatU16_LSB -- ^ Unsigned 16-bit samples, in little-endian byte order.
+  | FormatS16_LSB -- ^ Signed 16-bit samples, in little-endian byte order.
+  | FormatU16_MSB -- ^ Unsigned 16-bit samples, in big-endian byte order.
+  | FormatS16_MSB -- ^ signed 16-bit samples, in big-endian byte order.
+  | FormatU16_Sys -- ^ Unsigned 16-bit samples, in system byte order.
+  | FormatS16_Sys -- ^ Signed 16-bit samples, in system byte order.
   deriving (Eq, Ord, Bounded, Read, Show)
 
 formatToWord :: Format -> SDL.Raw.Mixer.Format
@@ -89,8 +88,6 @@ formatToWord = \case
   FormatS16_LSB -> SDL.Raw.Mixer.AUDIO_S16LSB
   FormatU16_MSB -> SDL.Raw.Mixer.AUDIO_U16MSB
   FormatS16_MSB -> SDL.Raw.Mixer.AUDIO_S16MSB
-  FormatU16     -> SDL.Raw.Mixer.AUDIO_U16
-  FormatS16     -> SDL.Raw.Mixer.AUDIO_S16
   FormatU16_Sys -> SDL.Raw.Mixer.AUDIO_U16SYS
   FormatS16_Sys -> SDL.Raw.Mixer.AUDIO_S16SYS
 
