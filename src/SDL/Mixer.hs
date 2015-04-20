@@ -39,7 +39,6 @@ import Data.Default.Class     (Default(def))
 import Data.Foldable          (foldl)
 import Foreign.C.Types        (CInt)
 import Foreign.Marshal.Alloc  (alloca)
-import Foreign.Ptr            (Ptr)
 import Foreign.Storable       (Storable(..))
 import Prelude         hiding (foldl)
 import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0)
@@ -181,14 +180,14 @@ queryAudio =
       alloca $ \form ->
         alloca $ \chan -> do
           void . throwIf0 "SDL.Mixer.queryAudio" "Mix_QuerySpec" $
-            SDL.Raw.Mixer.queryAudio freq form chan
+            SDL.Raw.Mixer.querySpec freq form chan
           Audio
             <$> (fromIntegral <$> peek freq)
             <*> (wordToFormat <$> peek form)
             <*> (cIntToOutput <$> peek chan)
 
--- | An audio chunk.
-newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
+-- -- | An audio chunk.
+-- newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
 
 -- Chunks
 -- TODO: getNumChunkDecoders
@@ -279,16 +278,16 @@ newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
 --       liftIO $ withCString filePath $ \cstr ->
 --         Raw.loadWav cstr
 
-newtype Channel = Channel CInt
+-- newtype Channel = Channel CInt
 
-data ChannelChoice
-  = AnyChannel
-  | SpecificChannel Channel
+-- data ChannelChoice
+--   = AnyChannel
+--   | SpecificChannel Channel
 
-data Loops
-  = Infinite
-  | Once
-  | Repeat Int
+-- data Loops
+--   = Infinite
+--   | Once
+--   | Repeat Int
 
 -- play :: (Functor m, MonadIO m) => Chunk -> m Channel
 -- play chunk = playChannel AnyChannel chunk Once
@@ -309,39 +308,19 @@ data Loops
 --                   Repeat n | n > 1     -> fromIntegral (n - 1)
 --                            | otherwise -> error "Invalid Repeat value"
 
-playing :: (Functor m, MonadIO m) => Channel -> m Bool
-playing channel =
-  fmap (> 0) $
-    SDL.Raw.Mixer.playing channel'
-  where
-    Channel channel' = channel
+-- playing :: (Functor m, MonadIO m) => Channel -> m Bool
+-- playing channel =
+--   fmap (> 0) $
+--     SDL.Raw.Mixer.playing channel'
+--   where
+--     Channel channel' = channel
 
-playingCount :: (Functor m, MonadIO m) => m Int
-playingCount =
-  fmap fromIntegral $
-    SDL.Raw.Mixer.playing (-1)
+-- playingCount :: (Functor m, MonadIO m) => m Int
+-- playingCount =
+--   fmap fromIntegral $
+--     SDL.Raw.Mixer.playing (-1)
 
-freeChunk :: MonadIO m => Chunk -> m ()
-freeChunk chunk = SDL.Raw.Mixer.freeChunk chunk'
-  where
-    Chunk chunk' = chunk
-
-  -- fromRaw r
-  --   | r == Raw.MIX_INIT_FLAC = InitFLAC
-  --   | r == Raw.MIX_INIT_MOD  = InitMOD
-  --   | r == Raw.MIX_INIT_MP3  = InitMP3
-  --   | r == Raw.MIX_INIT_OGG  = InitOGG
-  --   | otherwise = error "SDL.Mixer.fromRaw InitFlag: not recognized."
-
-  -- fromRaw r
-  --   | r == Raw.AUDIO_U8     = FormatU8
-  --   | r == Raw.AUDIO_S8     = FormatS8
-  --   | r == Raw.AUDIO_U16LSB = FormatU16_LSB
-  --   | r == Raw.AUDIO_S16LSB = FormatS16_LSB
-  --   | r == Raw.AUDIO_U16MSB = FormatU16_MSB
-  --   | r == Raw.AUDIO_S16MSB = FormatS16_MSB
-  --   | r == Raw.AUDIO_U16    = FormatU16
-  --   | r == Raw.AUDIO_S16    = FormatS16
-  --   | r == Raw.AUDIO_U16SYS = FormatU16_Sys
-  --   | r == Raw.AUDIO_S16SYS = FormatS16_Sys
-  --   | otherwise = error "SDL.Mixer.fromRaw Format: not recognized."
+-- freeChunk :: MonadIO m => Chunk -> m ()
+-- freeChunk chunk = SDL.Raw.Mixer.freeChunk chunk'
+--   where
+--     Chunk chunk' = chunk
