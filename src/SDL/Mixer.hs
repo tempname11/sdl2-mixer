@@ -8,10 +8,11 @@ Bindings to the @SDL2_mixer@ library.
 
 -}
 
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE TypeFamilies               #-}
 
 module SDL.Mixer
   (
@@ -40,6 +41,11 @@ module SDL.Mixer
   -- * Chunks
   , chunkDecoders
   , Chunk(..)
+
+  -- * Channels
+  , Channel
+  , setChannels
+  , getChannels
 
   -- * Music
   , musicDecoders
@@ -272,9 +278,23 @@ instance HasVolume Chunk where
     fmap fromIntegral .
       SDL.Raw.Mixer.volumeChunk p $ volumeToCInt v
 
+-- | A channel for mixing. The first channel is 0, the second 1 and so on. Note
+-- that you cannot use these if you haven't created them in advance with
+-- 'useChannels'.
+newtype Channel = Channel CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 
--- Chunks
--- TODO: freeChunk
+-- | Prepares a given number of 'Channel's for use. You may call this multiple
+-- times, even with sounds playing. If allocating a lesser number of 'Channel's
+-- in a future call, the higher channels will be stopped, their finished hooks
+-- called, and then freed. Passing in 0 or less will therefore stop and free
+-- all mixing channels (but any 'Music' will still be playing).
+setChannels :: MonadIO m => Int -> m ()
+setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
+
+-- | How many 'Channel's are prepared for use?
+getChannels :: MonadIO m => m Int
+getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
+
 
 -- Channels
 -- TODO: allocateChannels
@@ -330,7 +350,6 @@ instance Loadable Music where
   free (Music p) = liftIO $ SDL.Raw.Mixer.freeMusic p
 
 -- Music
--- TODO: freeMusic
 -- TODO: playMusic
 -- TODO: fadeInMusic
 -- TODO: fadeInMusicPos
