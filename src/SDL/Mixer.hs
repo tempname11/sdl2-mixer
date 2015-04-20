@@ -1,3 +1,13 @@
+{-|
+
+Module      : SDL.Mixer
+License     : BSD3
+Stability   : experimental
+
+Bindings to the @SDL2_mixer@ library.
+
+-}
+
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}

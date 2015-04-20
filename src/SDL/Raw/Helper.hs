@@ -1,6 +1,7 @@
 {-|
 
-Module : SDL.Raw.Helper
+Module  : SDL.Raw.Helper
+License : BSD3
 
 Exposes a way to automatically generate a foreign import alongside its lifted,
 inlined MonadIO variant. Use this to simplify the package's SDL.Raw.* modules.

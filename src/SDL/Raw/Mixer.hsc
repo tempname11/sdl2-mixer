@@ -1,6 +1,14 @@
--- A (hopefully) complete mapping of the C API.
--- See: https://www.libsdl.org/projects/SDL_mixer/docs/index.html
--- Mirror: http://jcatki.no-ip.org:8080/SDL_mixer/
+{-|
+
+Module      : SDL.Raw.Mixer
+License     : BSD3
+Stability   : experimental
+
+Raw bindings to the @SDL2_mixer@ library. No error-handling is done here. For
+more information about specific function behaviour, see the @SDL2_mixer@
+documentation.
+
+-}
 
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
