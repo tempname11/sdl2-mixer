@@ -21,7 +21,7 @@ module SDL.Mixer
   , quit
   , version
 
-  -- * Configure an audio device
+  -- * Configuring audio
   , openAudio
   , Audio(..)
   , ChunkSize
@@ -30,28 +30,34 @@ module SDL.Mixer
   , queryAudio
   , closeAudio
 
+  -- * Loading data
+  , Loadable(..)
+
   -- * Chunks
   , chunkDecoders
   , Chunk(..)
 
   -- * Music
   , musicDecoders
-  , Music
+  , Music(..)
 
   ) where
 
 import Control.Monad          (void, forM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Bits              ((.|.), (.&.))
+import Data.ByteString        (ByteString, readFile)
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Data.Default.Class     (Default(def))
 import Data.Foldable          (foldl)
 import Foreign.C.String       (peekCString)
 import Foreign.C.Types        (CInt)
 import Foreign.Marshal.Alloc  (alloca)
-import Foreign.Ptr            (Ptr)
+import Foreign.Ptr            (Ptr, castPtr)
 import Foreign.Storable       (Storable(..))
-import Prelude         hiding (foldl)
-import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0)
+import Prelude         hiding (foldl, readFile)
+import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0, throwIfNull)
+import SDL.Raw.Filesystem     (rwFromConstMem)
 
 import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
@@ -196,6 +202,20 @@ queryAudio =
 closeAudio :: MonadIO m => m ()
 closeAudio = SDL.Raw.Mixer.closeAudio
 
+-- | A class of all values that can be loaded from some source. You can load
+-- both 'Chunk's and 'Music' this way. Note that you must call 'openAudio'
+-- before using these, since they have to know the audio configuration to
+-- properly convert the data for playback.
+class Loadable a where
+
+  -- | Load the value from a 'ByteString'. Note that you must call 'openAudio'
+  -- before using this function.
+  decode :: MonadIO m => ByteString -> m a
+
+  -- | Same as 'decode', but loads from a file instead.
+  load :: MonadIO m => FilePath -> m a
+  load = (decode =<<) . liftIO . readFile
+
 -- | Returns the names of all chunk decoders currently available. These depend
 -- on the availability of shared libraries for each of the formats. The list
 -- may contain any of the following, and possibly others: @WAVE@, @AIFF@,
@@ -210,11 +230,15 @@ chunkDecoders =
 -- | A loaded audio chunk.
 newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk) deriving (Eq, Show)
 
+instance Loadable Chunk where
+  decode bytes = liftIO $ do
+    unsafeUseAsCStringLen bytes $ \(cstr, len) -> do
+      rw <- rwFromConstMem (castPtr cstr) (fromIntegral len)
+      fmap Chunk .
+        throwIfNull "SDL.Mixer.decode<Chunk>" "IMG_LoadWAV_RW" $
+          SDL.Raw.Mixer.loadWAV_RW rw 0
+
 -- Chunks
--- TODO: loadWAV
--- TODO: loadWAV_RW
--- TODO: quickLoadWAV
--- TODO: quickLoadRaw
 -- TODO: volumeChunk
 -- TODO: freeChunk
 
@@ -259,7 +283,15 @@ musicDecoders =
       SDL.Raw.Mixer.getMusicDecoder i >>= peekCString
 
 -- | A loaded music file.
-data Music
+newtype Music = Music (Ptr SDL.Raw.Mixer.Music) deriving (Eq, Show)
+
+instance Loadable Music where
+  decode bytes = liftIO $ do
+    unsafeUseAsCStringLen bytes $ \(cstr, len) -> do
+      rw <- rwFromConstMem (castPtr cstr) (fromIntegral len)
+      fmap Music .
+        throwIfNull "SDL.Mixer.decode<Music>" "IMG_LoadMUS_RW" $
+          SDL.Raw.Mixer.loadMUS_RW rw 0
 
 -- Music
 -- TODO: loadMUS
