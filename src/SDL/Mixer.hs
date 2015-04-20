@@ -36,16 +36,13 @@ version = liftIO $ do
   SDL.Raw.Version major minor patch <- peek =<< SDL.Raw.Mixer.getVersion
   return (fromIntegral major, fromIntegral minor, fromIntegral patch)
 
+-- | Initialize the library by loading support for a certain set of
+-- sample/music formats. You may call this function multiple times.
 initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
 initialize flags = do
-  let raw = foldl (\a b -> a .|. toRaw b) 0 flags
+  let raw = foldl (\a b -> a .|. initToCInt b) 0 flags
   throwIf_ ((/= raw) . (.&. raw)) "SDL.Mixer.initialize" "Mix_Init" $
-    Raw.init raw
-
-class RawConversion a where
-  type R a :: *
-  toRaw :: a -> R a
-  fromRaw :: R a -> a
+    SDL.Raw.Mixer.init raw
 
 -- | Used with 'initialize' to designate loading support for a particular
 -- sample/music format.
@@ -83,53 +80,30 @@ data Format
   | FormatS16_Sys
   deriving (Eq, Ord, Bounded, Read, Show)
 
-instance RawConversion Format where
-  type R Format = Raw.Format
+formatToWord :: Format -> SDL.Raw.Mixer.Format
+formatToWord = \case
+  FormatU8      -> SDL.Raw.Mixer.AUDIO_U8
+  FormatS8      -> SDL.Raw.Mixer.AUDIO_S8
+  FormatU16_LSB -> SDL.Raw.Mixer.AUDIO_U16LSB
+  FormatS16_LSB -> SDL.Raw.Mixer.AUDIO_S16LSB
+  FormatU16_MSB -> SDL.Raw.Mixer.AUDIO_U16MSB
+  FormatS16_MSB -> SDL.Raw.Mixer.AUDIO_S16MSB
+  FormatU16     -> SDL.Raw.Mixer.AUDIO_U16
+  FormatS16     -> SDL.Raw.Mixer.AUDIO_S16
+  FormatU16_Sys -> SDL.Raw.Mixer.AUDIO_U16SYS
+  FormatS16_Sys -> SDL.Raw.Mixer.AUDIO_S16SYS
 
-  toRaw = \case
-    FormatU8      -> Raw.AUDIO_U8
-    FormatS8      -> Raw.AUDIO_S8
-    FormatU16_LSB -> Raw.AUDIO_U16LSB
-    FormatS16_LSB -> Raw.AUDIO_S16LSB
-    FormatU16_MSB -> Raw.AUDIO_U16MSB
-    FormatS16_MSB -> Raw.AUDIO_S16MSB
-    FormatU16     -> Raw.AUDIO_U16
-    FormatS16     -> Raw.AUDIO_S16
-    FormatU16_Sys -> Raw.AUDIO_U16SYS
-    FormatS16_Sys -> Raw.AUDIO_S16SYS
-
-  fromRaw r
-    | r == Raw.AUDIO_U8     = FormatU8
-    | r == Raw.AUDIO_S8     = FormatS8
-    | r == Raw.AUDIO_U16LSB = FormatU16_LSB
-    | r == Raw.AUDIO_S16LSB = FormatS16_LSB
-    | r == Raw.AUDIO_U16MSB = FormatU16_MSB
-    | r == Raw.AUDIO_S16MSB = FormatS16_MSB
-    | r == Raw.AUDIO_U16    = FormatU16
-    | r == Raw.AUDIO_S16    = FormatS16
-    | r == Raw.AUDIO_U16SYS = FormatU16_Sys
-    | r == Raw.AUDIO_S16SYS = FormatS16_Sys
-    | otherwise = error "SDL.Mixer.fromRaw Format: not recognized."
-
-defaultSpec :: AudioSpec
-defaultSpec = AudioSpec
-  { audioFrequency = 44100
-  , audioFormat    = FormatS16_Sys
-  , audioOutput    = Stereo
-  }
-
-data Output
-  = Stereo
-  | Mono
-  deriving (Bounded, Eq, Read, Show)
-
-instance RawConversion Output where
-  type R Output = CInt
-  toRaw Stereo = 2
-  toRaw Mono   = 1
-  fromRaw 2 = Stereo
-  fromRaw 1 = Mono
-  fromRaw _ = error "Raw Output not recognized"
+wordToFormat :: SDL.Raw.Mixer.Format -> Format
+wordToFormat = \case
+  SDL.Raw.Mixer.AUDIO_U8     -> FormatU8
+  SDL.Raw.Mixer.AUDIO_S8     -> FormatS8
+  SDL.Raw.Mixer.AUDIO_U16LSB -> FormatU16_LSB
+  SDL.Raw.Mixer.AUDIO_S16LSB -> FormatS16_LSB
+  SDL.Raw.Mixer.AUDIO_U16MSB -> FormatU16_MSB
+  SDL.Raw.Mixer.AUDIO_S16MSB -> FormatS16_MSB
+  SDL.Raw.Mixer.AUDIO_U16SYS -> FormatU16_Sys
+  SDL.Raw.Mixer.AUDIO_S16SYS -> FormatS16_Sys
+  _ -> error "SDL.Mixer.wordToFormat: unknown Format."
 
 data AudioSpec = AudioSpec
   { audioFrequency :: Int    -- ^ Sampling frequency.
@@ -143,28 +117,57 @@ instance Default AudioSpec where
                   , audioOutput    = Stereo
                   }
 
-openAudio :: (Functor m, MonadIO m) => AudioSpec -> Int -> m ()
-openAudio config chunkSize_ =
+data Output = Mono | Stereo
+  deriving (Eq, Ord, Bounded, Read, Show)
+
+outputToCInt :: Output -> CInt
+outputToCInt = \case
+  Mono   -> 1
+  Stereo -> 2
+
+cIntToOutput :: CInt -> Output
+cIntToOutput = \case
+  1 -> Mono
+  2 -> Stereo
+  _ -> error "SDL.Mixer.cIntToOutput: unknown number of channels."
+
+-- | The size of each mixed sample. The smaller this is, the more your hooks
+-- will be called. If this is made too small on a slow system, the sounds may
+-- skip. If made too large, sound effects could lag.
+type ChunkSize = Int
+
+-- | Initializes the @SDL2_mixer@ API. This must be the first function you call
+-- after intializing @SDL@ itself with 'SDL.InitAudio'.
+openAudio :: (Functor m, MonadIO m) => AudioSpec -> ChunkSize -> m ()
+openAudio (AudioSpec {..}) chunkSize =
   throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
-    Raw.openAudio frequency format output chunkSize
-    where
-      frequency = fromIntegral (audioFrequency config)
-      format    = toRaw        (audioFormat config)
-      output    = toRaw        (audioOutput config)
-      chunkSize = fromIntegral chunkSize_
+    SDL.Raw.Mixer.openAudio
+      (fromIntegral audioFrequency)
+      (formatToWord audioFormat)
+      (outputToCInt audioOutput)
+      (fromIntegral chunkSize)
 
+-- | Shut down and clean up the @SDL2_mixer@ API. After calling this, all audio
+-- stops and no functions except 'openAudio' should be used.
+closeAudio :: MonadIO m => m ()
+closeAudio = SDL.Raw.Mixer.closeAudio
+
+-- | Get the audio format in use by the opened audio device. This may or may
+-- not match the 'AudioSpec' you asked for when calling 'openAudio'.
 querySpec :: (MonadIO m) => m AudioSpec
-querySpec = liftIO $
-  alloca $ \pa ->
-    alloca $ \pb ->
-      alloca $ \pc -> do
-        _ <- throwIf0 "SDL.Mixer.querySpec" "Mix_QuerySpec" $ Raw.querySpec pa pb pc
-        frequency <- fromIntegral <$> peek pa
-        format    <- fromRaw      <$> peek pb
-        output    <- fromRaw      <$> peek pc
-        return $ AudioSpec frequency format output
+querySpec =
+  liftIO .
+    alloca $ \freq ->
+      alloca $ \form ->
+        alloca $ \chan -> do
+          void . throwIf0 "SDL.Mixer.querySpec" "Mix_QuerySpec" $
+            SDL.Raw.Mixer.querySpec freq form chan
+          AudioSpec
+            <$> (fromIntegral <$> peek freq)
+            <*> (wordToFormat <$> peek form)
+            <*> (cIntToOutput <$> peek chan)
 
-newtype Chunk = Chunk (Ptr Raw.Chunk)
+newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
 
 -- load :: (Functor m, MonadIO m) => FilePath -> m Chunk
 -- load filePath =
