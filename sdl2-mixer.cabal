@@ -38,6 +38,7 @@ library
 
   build-depends:
     base >= 4.7 && < 5,
+    data-default-class >= 0.0.1,
     sdl2 >= 2.0.0,
     template-haskell,
     transformers >= 0.2 && < 0.5

@@ -40,6 +40,7 @@ module SDL.Mixer where
 import Prelude hiding (foldl)
 import Control.Monad.IO.Class
 import Data.Bits
+import Data.Default.Class (Default(def))
 import Data.Foldable
 -- import Foreign.C.String
 import Foreign.C.Types
@@ -158,10 +159,16 @@ instance RawConversion Output where
   fromRaw _ = error "Raw Output not recognized"
 
 data AudioSpec = AudioSpec
-  { audioFrequency :: Int
-  , audioFormat    :: Format
-  , audioOutput    :: Output
+  { audioFrequency :: Int    -- ^ Sampling frequency.
+  , audioFormat    :: Format -- ^ Output sample format.
+  , audioOutput    :: Output -- ^ 'Mono' or 'Stereo' output.
   } deriving (Eq, Read, Show)
+
+instance Default AudioSpec where
+  def = AudioSpec { audioFrequency = SDL.Raw.Mixer.MIX_DEFAULT_FREQUENCY
+                  , audioFormat    = FormatS16_Sys
+                  , audioOutput    = Stereo
+                  }
 
 openAudio :: (Functor m, MonadIO m) => AudioSpec -> Int -> m ()
 openAudio config chunkSize_ =
