@@ -2,36 +2,36 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeFamilies      #-}
 
-module SDL.Mixer (
-  initialize,
-  quit,
-  openAudio,
-  querySpec,
-  load,
-  play,
-  playChannel,
-  playing,
-  playingCount,
-  freeChunk,
-  closeAudio,
+module SDL.Mixer where
+--   initialize,
+--   quit,
+--   openAudio,
+--   querySpec,
+--   load,
+--   play,
+--   playChannel,
+--   playing,
+--   playingCount,
+--   freeChunk,
+--   closeAudio,
 
-  defaultSpec,
-  AudioSpec(..),
+--   defaultSpec,
+--   AudioSpec(..),
 
-  Output(..),
-  Format(..),
-  InitFlag(..),
-  ChannelChoice(..),
-  Loops(..),
-  Chunk,
-  Channel,
-) where
+--   Output(..),
+--   Format(..),
+--   InitFlag(..),
+--   ChannelChoice(..),
+--   Loops(..),
+--   Chunk,
+--   Channel,
+-- ) where
 
 import Prelude hiding (foldl)
 import Control.Monad.IO.Class
 import Data.Bits
 import Data.Foldable
-import Foreign.C.String
+-- import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
@@ -171,12 +171,12 @@ querySpec = liftIO $
 
 newtype Chunk = Chunk (Ptr Raw.Chunk)
 
-load :: (Functor m, MonadIO m) => FilePath -> m Chunk
-load filePath =
-  fmap Chunk $
-    throwIfNull "SDL.Mixer.load" "Mix_LoadWAV" $
-      liftIO $ withCString filePath $ \cstr ->
-        Raw.loadWav cstr
+-- load :: (Functor m, MonadIO m) => FilePath -> m Chunk
+-- load filePath =
+--   fmap Chunk $
+--     throwIfNull "SDL.Mixer.load" "Mix_LoadWAV" $
+--       liftIO $ withCString filePath $ \cstr ->
+--         Raw.loadWav cstr
 
 newtype Channel = Channel CInt
 
@@ -189,24 +189,24 @@ data Loops
   | Once
   | Repeat Int
 
-play :: (Functor m, MonadIO m) => Chunk -> m Channel
-play chunk = playChannel AnyChannel chunk Once
+-- play :: (Functor m, MonadIO m) => Chunk -> m Channel
+-- play chunk = playChannel AnyChannel chunk Once
 
-playChannel :: (Functor m, MonadIO m) => ChannelChoice -> Chunk -> Loops -> m Channel
-playChannel channel chunk loops =
-  fmap Channel $
-    throwIfNeg "SDL.Mixer.playChannel" "Mix_PlayChannel" $
-      Raw.playChannel channel' chunk' loops'
-  where
-    Chunk chunk' = chunk
-    channel' = case channel of
-                    AnyChannel                  -> -1
-                    SpecificChannel (Channel n) -> n
-    loops' = case loops of
-                  Infinite             -> (-1)
-                  Once                 -> 0
-                  Repeat n | n > 1     -> fromIntegral (n - 1)
-                           | otherwise -> error "Invalid Repeat value"
+-- playChannel :: (Functor m, MonadIO m) => ChannelChoice -> Chunk -> Loops -> m Channel
+-- playChannel channel chunk loops =
+--   fmap Channel $
+--     throwIfNeg "SDL.Mixer.playChannel" "Mix_PlayChannel" $
+--       Raw.playChannel channel' chunk' loops'
+--   where
+--     Chunk chunk' = chunk
+--     channel' = case channel of
+--                     AnyChannel                  -> -1
+--                     SpecificChannel (Channel n) -> n
+--     loops' = case loops of
+--                   Infinite             -> (-1)
+--                   Once                 -> 0
+--                   Repeat n | n > 1     -> fromIntegral (n - 1)
+--                            | otherwise -> error "Invalid Repeat value"
 
 playing :: (Functor m, MonadIO m) => Channel -> m Bool
 playing channel =

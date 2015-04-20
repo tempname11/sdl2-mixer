@@ -2,6 +2,8 @@
 -- See: https://www.libsdl.org/projects/SDL_mixer/docs/index.html
 -- Mirror: http://jcatki.no-ip.org:8080/SDL_mixer/
 
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -91,17 +93,16 @@ module SDL.Raw.Mixer where
 
 #include "SDL_mixer.h"
 
-import Prelude hiding (init)
-import Control.Monad.IO.Class
 import Data.Int
 import Data.Word
-import Foreign.C.Types
 import Foreign.C.String
-import Foreign.Storable (Storable(..))
+import Foreign.C.Types
 import Foreign.Ptr
-import SDL.Raw.Types (RWops(..), Version(..))
-import SDL.Raw.Filesystem (rwFromFile)
+import Foreign.Storable (Storable(..))
+import Prelude hiding (init)
+-- import SDL.Raw.Filesystem (rwFromFile)
 import SDL.Raw.Helper (liftF)
+import SDL.Raw.Types (RWops(..), Version(..))
 
 pattern MIX_INIT_FLAC = (#const MIX_INIT_FLAC)
 pattern MIX_INIT_MOD  = (#const MIX_INIT_MOD)
@@ -164,7 +165,7 @@ instance Storable Chunk where
     (#poke Mix_Chunk, volume)    ptr chunkVolume
 
 -- General
-liftF "linkedVersion" "Mix_Linked_Version" [t|IO (Ptr Version)|]
+liftF "getVersion" "Mix_Linked_Version" [t|IO (Ptr Version)|]
 liftF "init" "Mix_Init" [t|InitFlag -> IO CInt|]
 liftF "quit" "Mix_Quit" [t|IO ()|]
 liftF "openAudio" "Mix_OpenAudio" [t|CInt -> Format -> CInt -> CInt -> IO CInt|]
@@ -241,17 +242,10 @@ liftF "setDistance" "Mix_SetDistance" [t|Channel -> Word8 -> IO CInt|]
 liftF "setPosition" "Mix_SetPosition" [t|Channel -> Int16 -> Word8 -> IO CInt|]
 liftF "setReverseStereo" "Mix_SetReverseStereo" [t|Channel -> CInt -> IO CInt|]
 
-compiledVersion :: Version
-compiledVersion = Version major minor patch
-  where
-    major = SDL_MIXER_MAJOR_VERSION
-    minor = SDL_MIXER_MINOR_VERSION
-    patch = SDL_MIXER_PATCHLEVEL
+-- loadWav :: MonadIO m => CString -> m (Ptr Chunk)
+-- loadWav v1 = liftIO $ withCString "rb" $ \rb -> do
+--   file <- rwFromFile v1 rb
+--   loadWavRW (file) 1
 
-loadWav :: MonadIO m => CString -> m (Ptr Chunk)
-loadWav v1 = liftIO $ withCString "rb" $ \rb -> do
-  file <- rwFromFile v1 rb
-  loadWavRW (file) 1
-
-playChannel :: MonadIO m => Channel -> Ptr Chunk -> CInt -> m CInt
-playChannel v1 v2 v3 = liftIO $ playChannelTimed' v1 v2 v3 (-1)
+-- playChannel :: MonadIO m => Channel -> Ptr Chunk -> CInt -> m CInt
+-- playChannel v1 v2 v3 = liftIO $ playChannelTimed' v1 v2 v3 (-1)
