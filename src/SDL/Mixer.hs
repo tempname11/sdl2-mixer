@@ -13,7 +13,24 @@ Bindings to the @SDL2_mixer@ library.
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeFamilies      #-}
 
-module SDL.Mixer where
+module SDL.Mixer
+  (
+  -- * Initialization
+    initialize
+  , InitFlag(..)
+  , quit
+  , version
+
+  -- * Configure an audio device
+  , openAudio
+  , AudioSpec(..)
+  , ChunkSize
+  , Format(..)
+  , Output(..)
+  , querySpec
+  , closeAudio
+
+  ) where
 
 import Control.Monad          (void)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -37,7 +54,10 @@ version = liftIO $ do
   return (fromIntegral major, fromIntegral minor, fromIntegral patch)
 
 -- | Initialize the library by loading support for a certain set of
--- sample/music formats. You may call this function multiple times.
+-- sample/music formats. You may call this function multiple times. Note that
+-- calling this is not strictly necessary: support for a certain format will be
+-- loaded automatically when attempting to load data in that format. Using
+-- 'initialize' allows you to decide /when/ to load support.
 initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
 initialize flags = do
   let raw = foldl (\a b -> a .|. initToCInt b) 0 flags
@@ -105,8 +125,8 @@ wordToFormat = \case
 
 -- | An audio configuration. Use this with 'openAudio'.
 data AudioSpec = AudioSpec
-  { audioFrequency :: Int    -- ^ Sampling frequency.
-  , audioFormat    :: Format -- ^ Output sample format.
+  { audioFrequency :: Int    -- ^ A sampling frequency.
+  , audioFormat    :: Format -- ^ An output sample format.
   , audioOutput    :: Output -- ^ 'Mono' or 'Stereo' output.
   } deriving (Eq, Read, Show)
 
@@ -136,8 +156,8 @@ cIntToOutput = \case
 -- skip. If made too large, sound effects could lag.
 type ChunkSize = Int
 
--- | Initializes the @SDL2_mixer@ API. This must be the first function you call
--- after intializing @SDL@ itself with 'SDL.InitAudio'.
+-- | Initializes the @SDL2_mixer@ API. This should be the first function you
+-- call after intializing @SDL@ itself with 'SDL.Init.InitAudio'.
 openAudio :: (Functor m, MonadIO m) => AudioSpec -> ChunkSize -> m ()
 openAudio (AudioSpec {..}) chunkSize =
   throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
