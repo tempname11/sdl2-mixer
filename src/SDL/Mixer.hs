@@ -34,10 +34,6 @@ module SDL.Mixer
   -- * Loading audio data
   , Loadable(..)
 
-  -- * Setting the volume
-  , HasVolume(..)
-  , Volume
-
   -- * Chunks
   , chunkDecoders
   , Chunk(..)
@@ -46,11 +42,16 @@ module SDL.Mixer
   , Channel
   , setChannels
   , getChannels
-  , allChannels
 
   -- * Music
   , musicDecoders
   , Music(..)
+
+  -- * Setting the volume
+  , Volume
+  , HasVolume(..)
+  , setVolumeAll
+  , getVolumeAll
 
   ) where
 
@@ -243,10 +244,21 @@ class HasVolume a where
   -- | Gets the value's currently set 'Volume'.
   getVolume :: MonadIO m => a -> m Volume
 
-  -- | Sets a value's 'Volume', returning the previous one. If the value is a
-  -- 'Chunk', the volume setting only takes effect when the 'Chunk' is used on
-  -- a 'Channel', being mixed into the output.
-  setVolume :: MonadIO m => Volume -> a -> m Volume
+  -- | Sets a value's 'Volume'. If the value is a 'Chunk', the volume setting
+  -- only takes effect when the 'Chunk' is used on a 'Channel', being mixed
+  -- into the output. In case of a 'Channel', the volume setting takes effect
+  -- during the final mix, along with the 'Chunk' volume. For instance, setting
+  -- the 'Volume' of a certain 'Channel' to 64 will halve the volume of all
+  -- 'Chunk's played on that 'Channel'.
+  setVolume :: MonadIO m => Volume -> a -> m ()
+
+-- | Sets all 'Channel's to a given 'Volume'.
+setVolumeAll :: MonadIO m => Volume -> m ()
+setVolumeAll = void . SDL.Raw.Mixer.volume (-1) . volumeToCInt
+
+-- | Gets the /average/ 'Volume' of all 'Channel's.
+getVolumeAll :: MonadIO m => m Volume
+getVolumeAll = fmap fromIntegral $ SDL.Raw.Mixer.volume (-1) (-1)
 
 -- | Returns the names of all chunk decoders currently available. These depend
 -- on the availability of shared libraries for each of the formats. The list
@@ -295,11 +307,6 @@ setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
--- | Use this value when you wish to perform an operation on not just one, but
--- all 'Channel's. For instance, using this value with 'getVolume' will return
--- the average 'Volume' of all 'Channel's.
-allChannels :: Channel
-allChannels = (-1)
 
 instance HasVolume Channel where
   getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
@@ -308,8 +315,6 @@ instance HasVolume Channel where
       SDL.Raw.Mixer.volume c $ volumeToCInt v
 
 -- Channels
--- TODO: allocateChannels
--- TODO: volume
 -- TODO: playChannel
 -- TODO: playChannelTimed
 -- TODO: fadeInChannel
