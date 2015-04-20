@@ -11,7 +11,9 @@ Bindings to the @SDL2_mixer@ library.
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeFamilies               #-}
 
 module SDL.Mixer
@@ -42,6 +44,7 @@ module SDL.Mixer
   , Channel
   , setChannels
   , getChannels
+  , pattern AnyChannel
 
   -- * Music
   , musicDecoders
@@ -293,6 +296,11 @@ instance HasVolume Chunk where
 -- 'setChannels'. The starting 'Volume' of each 'Channel' is the maximum: 128.
 newtype Channel = Channel CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 
+instance Show Channel where
+  show = \case
+    AnyChannel -> "AnyChannel"
+    Channel c  -> "Channel " ++ show c
+
 -- | Prepares a given number of 'Channel's for use. You may call this multiple
 -- times, even with sounds playing. If allocating a lesser number of 'Channel's
 -- in a future call, the higher channels will be stopped, their finished hooks
@@ -305,6 +313,10 @@ setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
+-- | Use this value when you wish to perform an operation on /any/ 'Channel'.
+-- Usually this means the first available 'Channel' will be chosen, assuming
+-- one exists.
+pattern AnyChannel = (-1) :: Channel
 
 instance HasVolume Channel where
   getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
