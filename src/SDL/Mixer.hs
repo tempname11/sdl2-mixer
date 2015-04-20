@@ -10,25 +10,25 @@ Bindings to the @SDL2_mixer@ library.
 
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeFamilies      #-}
 
 module SDL.Mixer where
 
 import Prelude hiding (foldl)
-import Control.Monad.IO.Class
-import Data.Bits
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Bits ((.|.), (.&.))
 import Data.Default.Class (Default(def))
-import Data.Foldable
--- import Foreign.C.String
-import Foreign.C.Types
-import Foreign.Marshal.Alloc
-import Foreign.Ptr
-import Foreign.Storable
-import SDL.Exception
+import Data.Foldable (foldl)
+import Foreign.C.Types (CInt)
+import Foreign.Marshal.Alloc (alloca)
+import Foreign.Ptr (Ptr)
+import Foreign.Storable (Storable(..))
+import SDL.Exception (throwIfNeg_, throwIf_, throwIf0)
 
 import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
-import qualified SDL.Raw.Mixer as Raw
 
 -- | Gets the major, minor, patch versions of the linked @SDL2_mixer@ library.
 version :: (Integral a, MonadIO m) => m (a, a, a)
@@ -64,8 +64,9 @@ initToCInt = \case
   InitOGG        -> SDL.Raw.Mixer.MIX_INIT_OGG
   InitFluidSynth -> SDL.Raw.Mixer.MIX_INIT_FLUIDSYNTH
 
+-- | Cleans up any loaded libraries, freeing memory.
 quit :: MonadIO m => m ()
-quit = Raw.quit
+quit = SDL.Raw.Mixer.quit -- FIXME: May not free all init'd libs! Check docs.
 
 data Format
   = FormatU8
@@ -194,7 +195,7 @@ data Loops
 -- playChannel channel chunk loops =
 --   fmap Channel $
 --     throwIfNeg "SDL.Mixer.playChannel" "Mix_PlayChannel" $
---       Raw.playChannel channel' chunk' loops'
+--       SDL.Raw.Mixer.playChannel channel' chunk' loops'
 --   where
 --     Chunk chunk' = chunk
 --     channel' = case channel of
@@ -209,19 +210,36 @@ data Loops
 playing :: (Functor m, MonadIO m) => Channel -> m Bool
 playing channel =
   fmap (> 0) $
-    Raw.playing channel'
+    SDL.Raw.Mixer.playing channel'
   where
     Channel channel' = channel
 
 playingCount :: (Functor m, MonadIO m) => m Int
 playingCount =
   fmap fromIntegral $
-    Raw.playing (-1)
+    SDL.Raw.Mixer.playing (-1)
 
 freeChunk :: MonadIO m => Chunk -> m ()
-freeChunk chunk = Raw.freeChunk chunk'
+freeChunk chunk = SDL.Raw.Mixer.freeChunk chunk'
   where
     Chunk chunk' = chunk
 
-closeAudio :: MonadIO m => m ()
-closeAudio = Raw.closeAudio
+  -- fromRaw r
+  --   | r == Raw.MIX_INIT_FLAC = InitFLAC
+  --   | r == Raw.MIX_INIT_MOD  = InitMOD
+  --   | r == Raw.MIX_INIT_MP3  = InitMP3
+  --   | r == Raw.MIX_INIT_OGG  = InitOGG
+  --   | otherwise = error "SDL.Mixer.fromRaw InitFlag: not recognized."
+
+  -- fromRaw r
+  --   | r == Raw.AUDIO_U8     = FormatU8
+  --   | r == Raw.AUDIO_S8     = FormatS8
+  --   | r == Raw.AUDIO_U16LSB = FormatU16_LSB
+  --   | r == Raw.AUDIO_S16LSB = FormatS16_LSB
+  --   | r == Raw.AUDIO_U16MSB = FormatU16_MSB
+  --   | r == Raw.AUDIO_S16MSB = FormatS16_MSB
+  --   | r == Raw.AUDIO_U16    = FormatU16
+  --   | r == Raw.AUDIO_S16    = FormatS16
+  --   | r == Raw.AUDIO_U16SYS = FormatU16_Sys
+  --   | r == Raw.AUDIO_S16SYS = FormatS16_Sys
+  --   | otherwise = error "SDL.Mixer.fromRaw Format: not recognized."
