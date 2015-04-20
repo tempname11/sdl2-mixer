@@ -48,10 +48,21 @@ import Foreign.Ptr
 import Foreign.Storable
 import SDL.Exception
 
+import qualified SDL.Raw
+import qualified SDL.Raw.Mixer
 import qualified SDL.Raw.Mixer as Raw
 
-foldFlags :: (Bits b, Foldable f, Num b) => (flag -> b) -> f flag -> b
-foldFlags f = foldl (\a b -> a .|. f b) 0
+-- | Gets the major, minor, patch versions of the linked @SDL2_mixer@ library.
+version :: (Integral a, MonadIO m) => m (a, a, a)
+version = liftIO $ do
+  SDL.Raw.Version major minor patch <- peek =<< SDL.Raw.Mixer.getVersion
+  return (fromIntegral major, fromIntegral minor, fromIntegral patch)
+
+initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
+initialize flags = do
+  let raw = foldl (\a b -> a .|. toRaw b) 0 flags
+  throwIf_ ((/= raw) . (.&. raw)) "SDL.Mixer.initialize" "Mix_Init" $
+    Raw.init raw
 
 class RawConversion a where
   type R a :: *
@@ -81,12 +92,6 @@ instance RawConversion InitFlag where
     | r == Raw.MIX_INIT_OGG  = InitOGG
     | otherwise = error "SDL.Mixer.fromRaw InitFlag: not recognized."
 
-initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
-initialize flags =
-  throwIf_ ((/= rawFlags) . (.&. rawFlags)) "SDL.Mixer.initialize" "Mix_Init" $
-    Raw.init rawFlags
-  where
-    rawFlags = foldFlags toRaw flags
 
 quit :: MonadIO m => m ()
 quit = Raw.quit
