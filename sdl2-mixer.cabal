@@ -21,6 +21,9 @@ library
     SDL.Mixer,
     SDL.Raw.Mixer
 
+  other-modules:
+    SDL.Raw.Helper
+
   hs-source-dirs:
     src/
 
@@ -36,6 +39,7 @@ library
   build-depends:
     base >= 4.7 && < 5,
     sdl2 >= 2.0.0,
+    template-haskell,
     transformers >= 0.2 && < 0.5
 
   default-language:
