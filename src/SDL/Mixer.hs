@@ -46,6 +46,7 @@ module SDL.Mixer
   , Channel
   , setChannels
   , getChannels
+  , allChannels
 
   -- * Music
   , musicDecoders
@@ -294,6 +295,12 @@ setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 -- | How many 'Channel's are prepared for use?
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
+
+-- | Use this value when you wish to perform an operation on not just one, but
+-- all 'Channel's. For instance, using this value with 'getVolume' will return
+-- the average 'Volume' of all 'Channel's.
+allChannels :: Channel
+allChannels = (-1)
 
 
 -- Channels
