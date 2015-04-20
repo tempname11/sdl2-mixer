@@ -27,7 +27,7 @@ module SDL.Mixer
   , ChunkSize
   , Format(..)
   , Output(..)
-  , querySpec
+  , queryAudio
   , closeAudio
 
   ) where
@@ -174,19 +174,20 @@ closeAudio = SDL.Raw.Mixer.closeAudio
 
 -- | Get the audio format in use by the opened audio device. This may or may
 -- not match the 'AudioSpec' you asked for when calling 'openAudio'.
-querySpec :: (MonadIO m) => m AudioSpec
-querySpec =
+queryAudio :: (MonadIO m) => m AudioSpec
+queryAudio =
   liftIO .
     alloca $ \freq ->
       alloca $ \form ->
         alloca $ \chan -> do
-          void . throwIf0 "SDL.Mixer.querySpec" "Mix_QuerySpec" $
-            SDL.Raw.Mixer.querySpec freq form chan
+          void . throwIf0 "SDL.Mixer.queryAudio" "Mix_QuerySpec" $
+            SDL.Raw.Mixer.queryAudio freq form chan
           AudioSpec
             <$> (fromIntegral <$> peek freq)
             <*> (wordToFormat <$> peek form)
             <*> (cIntToOutput <$> peek chan)
 
+-- | An audio chunk.
 newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
 
 -- load :: (Functor m, MonadIO m) => FilePath -> m Chunk
