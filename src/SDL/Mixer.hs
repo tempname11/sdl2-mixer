@@ -190,6 +190,88 @@ queryAudio =
 -- | An audio chunk.
 newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
 
+-- Chunks
+-- TODO: getNumChunkDecoders
+-- TODO: getChunkDecoder
+-- TODO: loadWAV
+-- TODO: loadWAV_RW
+-- TODO: quickLoadWAV
+-- TODO: quickLoadRaw
+-- TODO: volumeChunk
+-- TODO: freeChunk
+
+-- Channels
+-- TODO: allocateChannels
+-- TODO: volume
+-- TODO: playChannel
+-- TODO: playChannelTimed
+-- TODO: fadeInChannel
+-- TODO: fadeInChannelTimed
+-- TODO: pause
+-- TODO: resume
+-- TODO: haltChannel
+-- TODO: expireChannel
+-- TODO: fadeOutChannel
+-- TODO: channelFinished
+-- TODO: playing
+-- TODO: paused
+-- TODO: fadingChannel
+-- TODO: getChunk
+
+-- Channel groups
+-- TODO: reserveChannels
+-- TODO: groupChannel
+-- TODO: groupChannels
+-- TODO: groupCount
+-- TODO: groupAvailable
+-- TODO: groupOldest
+-- TODO: groupNewest
+-- TODO: fadeOutGroup
+-- TODO: haltGroup
+
+-- Music
+-- TODO: getNumMusicDecoders
+-- TODO: getMusicDecoder
+-- TODO: loadMUS
+-- TODO: loadMUS_RW
+-- TODO: loadMUSType_RW
+-- TODO: freeMusic
+-- TODO: playMusic
+-- TODO: fadeInMusic
+-- TODO: fadeInMusicPos
+-- TODO: hookMusic
+-- TODO: volumeMusic
+-- TODO: pauseMusic
+-- TODO: resumeMusic
+-- TODO: rewindMusic
+-- TODO: setMusicPosition
+-- TODO: setMusicCMD
+-- TODO: haltMusic
+-- TODO: fadeOutMusic
+-- TODO: hookMusicFinished
+-- TODO: getMusicType
+-- TODO: playingMusic
+-- TODO: pausedMusic
+-- TODO: fadingMusic
+-- TODO: getMusicHookData
+
+-- Effects
+-- TODO: registerEffect
+-- TODO: unregisterEffect
+-- TODO: unregisterAllEffects
+-- TODO: setPostMix
+-- TODO: setPanning
+-- TODO: setDistance
+-- TODO: setPosition
+-- TODO: setReverseStereo
+
+-- SoundFonts
+-- TODO: setSynchroValue
+-- TODO: getSynchroValue
+-- TODO: setSoundFonts
+-- TODO: getSoundFonts
+-- TODO: eachSoundFont
+
 -- load :: (Functor m, MonadIO m) => FilePath -> m Chunk
 -- load filePath =
 --   fmap Chunk $

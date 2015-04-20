@@ -475,6 +475,8 @@ liftF "setPosition" "Mix_SetPosition"
 liftF "setReverseStereo" "Mix_SetReverseStereo"
   [t|Channel -> CInt -> IO CInt|]
 
+-- ?.? Not documented
+
 liftF "setSynchroValue" "Mix_SetSynchroValue"
   [t|CInt -> IO CInt|]
 
