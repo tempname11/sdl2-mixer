@@ -1,5 +1,7 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies      #-}
+
 module SDL.Mixer (
   initialize,
   quit,
@@ -55,16 +57,19 @@ data InitFlag
 
 instance RawConversion InitFlag where
   type R InitFlag = Raw.InitFlag
-  toRaw InitFLAC = Raw.MIX_INIT_FLAC
-  toRaw InitMOD = Raw.MIX_INIT_MOD
-  toRaw InitMP3 = Raw.MIX_INIT_MP3
-  toRaw InitOGG = Raw.MIX_INIT_OGG
-  fromRaw r = case r of
-    r' | r' == Raw.MIX_INIT_FLAC -> InitFLAC 
-       | r' == Raw.MIX_INIT_MOD  -> InitMOD 
-       | r' == Raw.MIX_INIT_MP3  -> InitMP3 
-       | r' == Raw.MIX_INIT_OGG  -> InitOGG 
-       | otherwise               -> error "Raw InitFlag not recognized"
+
+  toRaw = \case
+    InitFLAC -> Raw.MIX_INIT_FLAC
+    InitMOD  -> Raw.MIX_INIT_MOD
+    InitMP3  -> Raw.MIX_INIT_MP3
+    InitOGG  -> Raw.MIX_INIT_OGG
+
+  fromRaw r
+    | r == Raw.MIX_INIT_FLAC = InitFLAC
+    | r == Raw.MIX_INIT_MOD  = InitMOD
+    | r == Raw.MIX_INIT_MP3  = InitMP3
+    | r == Raw.MIX_INIT_OGG  = InitOGG
+    | otherwise = error "SDL.Mixer.fromRaw InitFlag: not recognized."
 
 initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
 initialize flags =
@@ -87,32 +92,35 @@ data Format
   | FormatS16
   | FormatU16_Sys
   | FormatS16_Sys
-  deriving (Bounded, Eq, Read, Show)
+  deriving (Eq, Ord, Bounded, Read, Show)
 
 instance RawConversion Format where
   type R Format = Raw.Format
-  toRaw FormatU8      = Raw.AUDIO_U8
-  toRaw FormatS8      = Raw.AUDIO_S8
-  toRaw FormatU16_LSB = Raw.AUDIO_U16LSB
-  toRaw FormatS16_LSB = Raw.AUDIO_S16LSB
-  toRaw FormatU16_MSB = Raw.AUDIO_U16MSB
-  toRaw FormatS16_MSB = Raw.AUDIO_S16MSB
-  toRaw FormatU16     = Raw.AUDIO_U16
-  toRaw FormatS16     = Raw.AUDIO_S16
-  toRaw FormatU16_Sys = Raw.AUDIO_U16SYS
-  toRaw FormatS16_Sys = Raw.AUDIO_S16SYS
-  fromRaw r = case r of
-    r' | r' == Raw.AUDIO_U8     -> FormatU8 
-       | r' == Raw.AUDIO_S8     -> FormatS8 
-       | r' == Raw.AUDIO_U16LSB -> FormatU16_LSB 
-       | r' == Raw.AUDIO_S16LSB -> FormatS16_LSB 
-       | r' == Raw.AUDIO_U16MSB -> FormatU16_MSB 
-       | r' == Raw.AUDIO_S16MSB -> FormatS16_MSB 
-       | r' == Raw.AUDIO_U16    -> FormatU16 
-       | r' == Raw.AUDIO_S16    -> FormatS16 
-       | r' == Raw.AUDIO_U16SYS -> FormatU16_Sys 
-       | r' == Raw.AUDIO_S16SYS -> FormatS16_Sys 
-       | otherwise              -> error "Raw Format not recognized"
+
+  toRaw = \case
+    FormatU8      -> Raw.AUDIO_U8
+    FormatS8      -> Raw.AUDIO_S8
+    FormatU16_LSB -> Raw.AUDIO_U16LSB
+    FormatS16_LSB -> Raw.AUDIO_S16LSB
+    FormatU16_MSB -> Raw.AUDIO_U16MSB
+    FormatS16_MSB -> Raw.AUDIO_S16MSB
+    FormatU16     -> Raw.AUDIO_U16
+    FormatS16     -> Raw.AUDIO_S16
+    FormatU16_Sys -> Raw.AUDIO_U16SYS
+    FormatS16_Sys -> Raw.AUDIO_S16SYS
+
+  fromRaw r
+    | r == Raw.AUDIO_U8     = FormatU8
+    | r == Raw.AUDIO_S8     = FormatS8
+    | r == Raw.AUDIO_U16LSB = FormatU16_LSB
+    | r == Raw.AUDIO_S16LSB = FormatS16_LSB
+    | r == Raw.AUDIO_U16MSB = FormatU16_MSB
+    | r == Raw.AUDIO_S16MSB = FormatS16_MSB
+    | r == Raw.AUDIO_U16    = FormatU16
+    | r == Raw.AUDIO_S16    = FormatS16
+    | r == Raw.AUDIO_U16SYS = FormatU16_Sys
+    | r == Raw.AUDIO_S16SYS = FormatS16_Sys
+    | otherwise = error "SDL.Mixer.fromRaw Format: not recognized."
 
 defaultSpec :: AudioSpec
 defaultSpec = AudioSpec
