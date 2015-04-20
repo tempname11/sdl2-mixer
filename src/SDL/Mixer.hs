@@ -31,10 +31,10 @@ module SDL.Mixer
   , queryAudio
   , closeAudio
 
-  -- * Loading data
+  -- * Loading audio data
   , Loadable(..)
 
-  -- * Playing data
+  -- * Setting the volume
   , HasVolume(..)
   , Volume
 
@@ -219,8 +219,7 @@ closeAudio = SDL.Raw.Mixer.closeAudio
 -- properly convert the data for playback.
 class Loadable a where
 
-  -- | Load the value from a 'ByteString'. Note that you must call 'openAudio'
-  -- before using this function.
+  -- | Load the value from a 'ByteString'.
   decode :: MonadIO m => ByteString -> m a
 
   -- | Same as 'decode', but loads from a file instead.
@@ -288,8 +287,7 @@ newtype Channel = Channel CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 -- times, even with sounds playing. If allocating a lesser number of 'Channel's
 -- in a future call, the higher channels will be stopped, their finished hooks
 -- called, and then freed. Passing in 0 or less will therefore stop and free
--- all mixing channels (but any 'Music' will still be playing). The starting
--- 'Volume' of all 'Ch
+-- all mixing channels (but any 'Music' will still be playing).
 setChannels :: MonadIO m => Int -> m ()
 setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 
