@@ -78,6 +78,9 @@ module SDL.Raw.Mixer
   , paused
   , Fading
   , fadingChannel
+  , pattern MIX_NO_FADING
+  , pattern MIX_FADING_OUT
+  , pattern MIX_FADING_IN
   , getChunk
 
   -- * Groups
@@ -114,6 +117,16 @@ module SDL.Raw.Mixer
   , hookMusicFinished
   , MusicType
   , getMusicType
+  , pattern MUS_NONE
+  , pattern MUS_CMD
+  , pattern MUS_WAV
+  , pattern MUS_MOD
+  , pattern MUS_MID
+  , pattern MUS_OGG
+  , pattern MUS_MP3
+  , pattern MUS_MP3_MAD
+  , pattern MUS_FLAC
+  , pattern MUS_MODPLUG
   , playingMusic
   , pausedMusic
   , fadingMusic
@@ -288,6 +301,10 @@ liftF "paused" "Mix_Paused"
 
 type Fading = (#type Mix_Fading)
 
+pattern MIX_NO_FADING  = (#const MIX_NO_FADING)
+pattern MIX_FADING_IN  = (#const MIX_FADING_IN)
+pattern MIX_FADING_OUT = (#const MIX_FADING_OUT)
+
 liftF "fadingChannel" "Mix_FadingChannel"
   [t|Channel -> IO Fading|]
 
@@ -345,6 +362,18 @@ type MusicType = (#type Mix_MusicType)
 
 liftF "loadMUSType_RW" "Mix_LoadMUSType_RW"
   [t|Ptr RWops -> MusicType -> CInt -> IO (Ptr Music)|]
+
+pattern MUS_NONE    = (#const MUS_NONE)
+pattern MUS_CMD     = (#const MUS_CMD)
+pattern MUS_WAV     = (#const MUS_WAV)
+pattern MUS_MOD     = (#const MUS_MOD)
+pattern MUS_MID     = (#const MUS_MID)
+pattern MUS_OGG     = (#const MUS_OGG)
+pattern MUS_MP3     = (#const MUS_MP3)
+pattern MUS_MP3_MAD = (#const MUS_MP3_MAD)
+pattern MUS_FLAC    = (#const MUS_FLAC)
+pattern MUS_MODPLUG = (#const MUS_MODPLUG)
+
 liftF "freeMusic" "Mix_FreeMusic"
   [t|Ptr Music -> IO ()|]
 
