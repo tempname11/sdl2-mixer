@@ -33,6 +33,10 @@ module SDL.Mixer
   -- * Loading data
   , Loadable(..)
 
+  -- * Playing data
+  , HasVolume(..)
+  , Volume
+
   -- * Chunks
   , chunkDecoders
   , Chunk(..)
@@ -216,6 +220,24 @@ class Loadable a where
   load :: MonadIO m => FilePath -> m a
   load = (decode =<<) . liftIO . readFile
 
+-- | A volume, where 0 is silent and 128 loudest. 'Volume's lesser than 0 or
+-- greater than 128 function as if they are 0 and 128, respectively.
+type Volume = Int
+
+volumeToCInt :: Volume -> CInt
+volumeToCInt = fromIntegral . max 0 . min 128
+
+-- | A class of all values that have a 'Volume'.
+class HasVolume a where
+
+  -- | Gets the value's currently set 'Volume'.
+  getVolume :: MonadIO m => a -> m Volume
+
+  -- | Sets a value's 'Volume', returning the previous one. If the value is a
+  -- 'Chunk', the volume setting only takes effect when the 'Chunk' is used on
+  -- a 'Channel', being mixed into the output.
+  setVolume :: MonadIO m => Volume -> a -> m Volume
+
 -- | Returns the names of all chunk decoders currently available. These depend
 -- on the availability of shared libraries for each of the formats. The list
 -- may contain any of the following, and possibly others: @WAVE@, @AIFF@,
@@ -238,8 +260,14 @@ instance Loadable Chunk where
         throwIfNull "SDL.Mixer.decode<Chunk>" "IMG_LoadWAV_RW" $
           SDL.Raw.Mixer.loadWAV_RW rw 0
 
+instance HasVolume Chunk where
+  getVolume   (Chunk p) = fmap fromIntegral $ SDL.Raw.Mixer.volumeChunk p (-1)
+  setVolume v (Chunk p) =
+    fmap fromIntegral .
+      SDL.Raw.Mixer.volumeChunk p $ volumeToCInt v
+
+
 -- Chunks
--- TODO: volumeChunk
 -- TODO: freeChunk
 
 -- Channels
@@ -294,9 +322,6 @@ instance Loadable Music where
           SDL.Raw.Mixer.loadMUS_RW rw 0
 
 -- Music
--- TODO: loadMUS
--- TODO: loadMUS_RW
--- TODO: loadMUSType_RW
 -- TODO: freeMusic
 -- TODO: playMusic
 -- TODO: fadeInMusic
