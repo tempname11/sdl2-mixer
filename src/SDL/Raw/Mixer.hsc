@@ -264,7 +264,7 @@ liftF "fadeOutChannel" "Mix_FadeOutChannel"
   [t|Channel -> CInt -> IO CInt|]
 
 liftF "channelFinished" "Mix_ChannelFinished"
-  [t|FunPtr (Channel -> IO ()) -> IO ()|] -- FIXME: MonadIO, yikes!
+  [t|FunPtr (Channel -> IO ()) -> IO ()|]
 
 liftF "playing" "Mix_Playing"
   [t|Channel -> IO CInt|]
@@ -336,7 +336,7 @@ liftF "fadeInMusic" "Mix_FadeInMusic"
 liftF "fadeInMusicPos" "Mix_FadeInMusicPos"
   [t|Ptr Music -> CInt -> CInt -> CDouble -> IO CInt|]
 
-liftF "hookMusic" "Mix_HookMusic" -- TODO: MonadIO, yikes!
+liftF "hookMusic" "Mix_HookMusic"
   [t|FunPtr (Ptr () -> Ptr Word8 -> CInt -> IO ()) -> Ptr () -> IO ()|]
 
 liftF "volumeMusic" "Mix_VolumeMusic"
@@ -364,7 +364,7 @@ liftF "fadeOutMusic" "Mix_FadeOutMusic"
   [t|CInt -> IO CInt|]
 
 liftF "hookMusicFinished" "Mix_HookMusicFinished"
-  [t|FunPtr (IO ()) -> IO ()|] -- TODO: MonadIO, yikes!
+  [t|FunPtr (IO ()) -> IO ()|]
 
 type MusicType = (#type Mix_MusicType)
 
