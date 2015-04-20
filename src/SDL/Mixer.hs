@@ -30,13 +30,17 @@ module SDL.Mixer
   , queryAudio
   , closeAudio
 
+  -- * Music
+  , musicDecoders
+
   ) where
 
-import Control.Monad          (void)
+import Control.Monad          (void, forM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Bits              ((.|.), (.&.))
 import Data.Default.Class     (Default(def))
 import Data.Foldable          (foldl)
+import Foreign.C.String       (peekCString)
 import Foreign.C.Types        (CInt)
 import Foreign.Marshal.Alloc  (alloca)
 import Foreign.Storable       (Storable(..))
@@ -224,6 +228,17 @@ closeAudio = SDL.Raw.Mixer.closeAudio
 -- TODO: groupNewest
 -- TODO: fadeOutGroup
 -- TODO: haltGroup
+
+-- | Returns the names of all music decoders currently available. These depend
+-- on the availability of shared libraries for each of the formats. The list
+-- may contain any of the following, and possibly others: @WAVE@, @MODPLUG@,
+-- @MIKMOD@, @TIMIDITY@, @FLUIDSYNTH@, @NATIVEMIDI@, @OGG@, @FLAC@, @MP3@.
+musicDecoders :: MonadIO m => m [String]
+musicDecoders =
+  liftIO $ do
+    num <- SDL.Raw.Mixer.getNumMusicDecoders
+    forM [0 .. num - 1] $ \i ->
+      SDL.Raw.Mixer.getMusicDecoder i >>= peekCString
 
 -- Music
 -- TODO: getNumMusicDecoders
