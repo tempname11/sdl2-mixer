@@ -281,18 +281,19 @@ instance HasVolume Chunk where
 
 -- | A channel for mixing. The first channel is 0, the second 1 and so on. Note
 -- that you cannot use these if you haven't created them in advance with
--- 'useChannels'.
+-- 'setChannels'. The starting 'Volume' of each 'Channel' is the maximum: 128.
 newtype Channel = Channel CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 
 -- | Prepares a given number of 'Channel's for use. You may call this multiple
 -- times, even with sounds playing. If allocating a lesser number of 'Channel's
 -- in a future call, the higher channels will be stopped, their finished hooks
 -- called, and then freed. Passing in 0 or less will therefore stop and free
--- all mixing channels (but any 'Music' will still be playing).
+-- all mixing channels (but any 'Music' will still be playing). The starting
+-- 'Volume' of all 'Ch
 setChannels :: MonadIO m => Int -> m ()
 setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 
--- | How many 'Channel's are prepared for use?
+-- | Gets the number of 'Channel's currently in use.
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
@@ -302,6 +303,11 @@ getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 allChannels :: Channel
 allChannels = (-1)
 
+instance HasVolume Channel where
+  getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
+  setVolume v (Channel c) =
+    fmap fromIntegral .
+      SDL.Raw.Mixer.volume c $ volumeToCInt v
 
 -- Channels
 -- TODO: allocateChannels
