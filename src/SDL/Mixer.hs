@@ -47,29 +47,25 @@ class RawConversion a where
   toRaw :: a -> R a
   fromRaw :: R a -> a
 
+-- | Used with 'initialize' to designate loading support for a particular
+-- sample/music format.
 data InitFlag
   = InitFLAC
   | InitMOD
+  | InitMODPlug
   | InitMP3
   | InitOGG
-  deriving (Bounded, Eq, Read, Show)
+  | InitFluidSynth
+  deriving (Eq, Ord, Bounded, Read, Show)
 
-instance RawConversion InitFlag where
-  type R InitFlag = Raw.InitFlag
-
-  toRaw = \case
-    InitFLAC -> Raw.MIX_INIT_FLAC
-    InitMOD  -> Raw.MIX_INIT_MOD
-    InitMP3  -> Raw.MIX_INIT_MP3
-    InitOGG  -> Raw.MIX_INIT_OGG
-
-  fromRaw r
-    | r == Raw.MIX_INIT_FLAC = InitFLAC
-    | r == Raw.MIX_INIT_MOD  = InitMOD
-    | r == Raw.MIX_INIT_MP3  = InitMP3
-    | r == Raw.MIX_INIT_OGG  = InitOGG
-    | otherwise = error "SDL.Mixer.fromRaw InitFlag: not recognized."
-
+initToCInt :: InitFlag -> CInt
+initToCInt = \case
+  InitFLAC       -> SDL.Raw.Mixer.MIX_INIT_FLAC
+  InitMOD        -> SDL.Raw.Mixer.MIX_INIT_MOD
+  InitMODPlug    -> SDL.Raw.Mixer.MIX_INIT_MODPLUG
+  InitMP3        -> SDL.Raw.Mixer.MIX_INIT_MP3
+  InitOGG        -> SDL.Raw.Mixer.MIX_INIT_OGG
+  InitFluidSynth -> SDL.Raw.Mixer.MIX_INIT_FLUIDSYNTH
 
 quit :: MonadIO m => m ()
 quit = Raw.quit
