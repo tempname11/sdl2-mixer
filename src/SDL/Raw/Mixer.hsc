@@ -142,6 +142,15 @@ module SDL.Raw.Mixer
   , setPosition
   , setReverseStereo
 
+  -- * MikMod
+  , setSynchroValue
+  , getSynchroValue
+
+  -- * MIDI backends
+  , setSoundFonts
+  , getSoundFonts
+  , eachSoundFont
+
   ) where
 
 #include "SDL_mixer.h"
@@ -462,3 +471,18 @@ liftF "setPosition" "Mix_SetPosition"
 
 liftF "setReverseStereo" "Mix_SetReverseStereo"
   [t|Channel -> CInt -> IO CInt|]
+
+liftF "setSynchroValue" "Mix_SetSynchroValue"
+  [t|CInt -> IO CInt|]
+
+liftF "getSynchroValue" "Mix_GetSynchroValue"
+  [t|IO CInt|]
+
+liftF "setSoundFonts" "Mix_SetSoundFonts"
+  [t|Ptr CString -> IO CInt|]
+
+liftF "getSoundFonts" "Mix_GetSoundFonts"
+  [t|IO (Ptr CString)|]
+
+liftF "eachSoundFont" "Mix_EachSoundFont"
+  [t|FunPtr (CString -> Ptr () -> IO CInt) -> Ptr () -> IO CInt|]
