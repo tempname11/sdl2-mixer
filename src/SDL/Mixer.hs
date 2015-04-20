@@ -13,29 +13,6 @@ Bindings to the @SDL2_mixer@ library.
 {-# LANGUAGE TypeFamilies      #-}
 
 module SDL.Mixer where
---   initialize,
---   quit,
---   openAudio,
---   querySpec,
---   load,
---   play,
---   playChannel,
---   playing,
---   playingCount,
---   freeChunk,
---   closeAudio,
-
---   defaultSpec,
---   AudioSpec(..),
-
---   Output(..),
---   Format(..),
---   InitFlag(..),
---   ChannelChoice(..),
---   Loops(..),
---   Chunk,
---   Channel,
--- ) where
 
 import Prelude hiding (foldl)
 import Control.Monad.IO.Class
