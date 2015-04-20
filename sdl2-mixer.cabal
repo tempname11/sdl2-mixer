@@ -18,11 +18,8 @@ library
   ghc-options: -Wall
 
   exposed-modules:
-    SDL.Mixer
-
+    SDL.Mixer,
     SDL.Raw.Mixer
-    SDL.Raw.Mixer.Enum
-    SDL.Raw.Mixer.Types
 
   hs-source-dirs:
     src/

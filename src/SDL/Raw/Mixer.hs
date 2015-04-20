@@ -2,92 +2,88 @@
 -- See: https://www.libsdl.org/projects/SDL_mixer/docs/index.html
 -- Mirror: http://jcatki.no-ip.org:8080/SDL_mixer/
 
-module SDL.Raw.Mixer (
-  -- General
-  compiledVersion,
-  linkedVersion,
-  init,
-  quit,
-  openAudio,
-  closeAudio,
-  querySpec,
+module SDL.Raw.Mixer where
+  -- -- General
+  -- compiledVersion,
+  -- linkedVersion,
+  -- init,
+  -- quit,
+  -- openAudio,
+  -- closeAudio,
+  -- querySpec,
 
-  -- Samples
-  getNumChunkDecoders,
-  getChunkDecoder,
-  loadWav,
-  loadWavRW,
-  quickLoadWav,
-  quickLoadRaw,
-  volumeChunk,
-  freeChunk,
+  -- -- Samples
+  -- getNumChunkDecoders,
+  -- getChunkDecoder,
+  -- loadWav,
+  -- loadWavRW,
+  -- quickLoadWav,
+  -- quickLoadRaw,
+  -- volumeChunk,
+  -- freeChunk,
 
-  -- Channels
-  allocateChannels,
-  volume,
-  playChannel,
-  playChannelTimed,
-  fadeInChannel,
-  fadeInChannelTimed,
-  pause,
-  resume,
-  haltChannel,
-  expireChannel,
-  fadeOutChannel,
-  channelFinished,
-  playing,
-  paused,
-  fadingChannel,
-  getChunk,
+  -- -- Channels
+  -- allocateChannels,
+  -- volume,
+  -- playChannel,
+  -- playChannelTimed,
+  -- fadeInChannel,
+  -- fadeInChannelTimed,
+  -- pause,
+  -- resume,
+  -- haltChannel,
+  -- expireChannel,
+  -- fadeOutChannel,
+  -- channelFinished,
+  -- playing,
+  -- paused,
+  -- fadingChannel,
+  -- getChunk,
 
-  -- Groups
-  reserveChannels,
-  groupChannel,
-  groupChannels,
-  groupCount,
-  groupAvailable,
-  groupOldest,
-  groupNewer,
-  fadeOutGroup,
-  haltGroup,
+  -- -- Groups
+  -- reserveChannels,
+  -- groupChannel,
+  -- groupChannels,
+  -- groupCount,
+  -- groupAvailable,
+  -- groupOldest,
+  -- groupNewer,
+  -- fadeOutGroup,
+  -- haltGroup,
 
-  -- Music
-  getNumMusicDecoders,
-  getMusicDecoder,
-  loadMus,
-  freeMusic,
-  playMusic,
-  fadeInMusic,
-  fadeInMusicPos,
-  hookMusic,
-  volumeMusic,
-  pauseMusic,
-  resumeMusic,
-  rewindMusic,
-  setMusicPosition,
-  setMusicCmd,
-  haltMusic,
-  fadeOutMusic,
-  hookMusicFinished,
-  getMusicType,
-  playingMusic,
-  pausedMusic,
-  fadingMusic,
-  getMusicHookData,
+  -- -- Music
+  -- getNumMusicDecoders,
+  -- getMusicDecoder,
+  -- loadMus,
+  -- freeMusic,
+  -- playMusic,
+  -- fadeInMusic,
+  -- fadeInMusicPos,
+  -- hookMusic,
+  -- volumeMusic,
+  -- pauseMusic,
+  -- resumeMusic,
+  -- rewindMusic,
+  -- setMusicPosition,
+  -- setMusicCmd,
+  -- haltMusic,
+  -- fadeOutMusic,
+  -- hookMusicFinished,
+  -- getMusicType,
+  -- playingMusic,
+  -- pausedMusic,
+  -- fadingMusic,
+  -- getMusicHookData,
 
-  -- Effects
-  registerEffect,
-  unregisterEffect,
-  unregisterAllEffects,
-  setPostMix,
-  setPanning,
-  setDistance,
-  setPosition,
-  setReverseStereo,
-
-  module SDL.Raw.Mixer.Enum,
-  module SDL.Raw.Mixer.Types
-) where
+  -- -- Effects
+  -- registerEffect,
+  -- unregisterEffect,
+  -- unregisterAllEffects,
+  -- setPostMix,
+  -- setPanning,
+  -- setDistance,
+  -- setPosition,
+  -- setReverseStereo,
 
 import Prelude hiding (init)
 import Control.Monad.IO.Class
@@ -100,6 +96,66 @@ import SDL.Raw.Mixer.Enum
 import SDL.Raw.Mixer.Types
 import SDL.Raw.Types (RWops(..), Version(..))
 import SDL.Raw.Filesystem (rwFromFile)
+
+pattern MIX_INIT_FLAC = (#const MIX_INIT_FLAC)
+pattern MIX_INIT_MOD  = (#const MIX_INIT_MOD)
+pattern MIX_INIT_MP3  = (#const MIX_INIT_MP3)
+pattern MIX_INIT_OGG  = (#const MIX_INIT_OGG)
+
+pattern AUDIO_U8     = (#const AUDIO_U8)
+pattern AUDIO_S8     = (#const AUDIO_S8)
+pattern AUDIO_U16LSB = (#const AUDIO_U16LSB)
+pattern AUDIO_S16LSB = (#const AUDIO_S16LSB)
+pattern AUDIO_U16MSB = (#const AUDIO_U16MSB)
+pattern AUDIO_S16MSB = (#const AUDIO_S16MSB)
+pattern AUDIO_U16    = (#const AUDIO_U16)
+pattern AUDIO_S16    = (#const AUDIO_S16)
+pattern AUDIO_U16SYS = (#const AUDIO_U16SYS)
+pattern AUDIO_S16SYS = (#const AUDIO_S16SYS)
+
+pattern MIX_DEFAULT_FORMAT = (#const MIX_DEFAULT_FORMAT)
+
+pattern SDL_MIXER_MAJOR_VERSION = (#const SDL_MIXER_MAJOR_VERSION)
+pattern SDL_MIXER_MINOR_VERSION = (#const SDL_MIXER_MINOR_VERSION)
+pattern SDL_MIXER_PATCHLEVEL    = (#const SDL_MIXER_PATCHLEVEL)
+
+type InitFlag = CInt
+type Format = Word16
+type Tag = CInt
+type Channel = CInt
+type Fading = (#type Mix_Fading)
+type ChannelFinishedCallback = FunPtr (Channel -> IO ())
+type EffectCallback = FunPtr (Channel -> Ptr () -> CInt -> Ptr () -> IO ())
+type EffectDoneCallback = FunPtr (Channel -> Ptr () -> IO ())
+type MixCallback = FunPtr (Ptr () -> Ptr Word8 -> CInt -> IO ())
+type MusicFinishedCallback = FunPtr (IO ())
+type MusicType = (#type Mix_MusicType)
+
+data Music
+
+data Chunk = Chunk
+  { chunkAllocated :: CInt
+  , chunkAbuf      :: Ptr Word8
+  , chunkAlen      :: Word32
+  , chunkVolume    :: Word8
+  } deriving (Eq, Show)
+
+instance Storable Chunk where
+  alignment = sizeOf
+  sizeOf _  = (#size Mix_Chunk)
+
+  peek ptr = do
+    allocated <- (#peek Mix_Chunk, allocated) ptr
+    abuf      <- (#peek Mix_Chunk, abuf) ptr
+    alen      <- (#peek Mix_Chunk, alen) ptr
+    volume    <- (#peek Mix_Chunk, volume) ptr
+    return $! Chunk allocated abuf alen volume
+
+  poke ptr (Chunk {..}) = do
+    (#poke Mix_Chunk, allocated) ptr chunkAllocated
+    (#poke Mix_Chunk, abuf)      ptr chunkAbuf
+    (#poke Mix_Chunk, alen)      ptr chunkAlen
+    (#poke Mix_Chunk, volume)    ptr chunkVolume
 
 -- General
 foreign import ccall "SDL_mixer.h Mix_Linked_Version" linkedVersion' :: IO (Ptr Version)
