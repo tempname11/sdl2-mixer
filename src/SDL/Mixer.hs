@@ -220,6 +220,10 @@ class Loadable a where
   load :: MonadIO m => FilePath -> m a
   load = (decode =<<) . liftIO . readFile
 
+  -- | Frees the value's memory. It should no longer be used. Note that you
+  -- shouldn't free those values which are currently playing.
+  free :: MonadIO m => a -> m ()
+
 -- | A volume, where 0 is silent and 128 loudest. 'Volume's lesser than 0 or
 -- greater than 128 function as if they are 0 and 128, respectively.
 type Volume = Int
@@ -259,6 +263,8 @@ instance Loadable Chunk where
       fmap Chunk .
         throwIfNull "SDL.Mixer.decode<Chunk>" "IMG_LoadWAV_RW" $
           SDL.Raw.Mixer.loadWAV_RW rw 0
+
+  free (Chunk p) = liftIO $ SDL.Raw.Mixer.freeChunk p
 
 instance HasVolume Chunk where
   getVolume   (Chunk p) = fmap fromIntegral $ SDL.Raw.Mixer.volumeChunk p (-1)
@@ -320,6 +326,8 @@ instance Loadable Music where
       fmap Music .
         throwIfNull "SDL.Mixer.decode<Music>" "IMG_LoadMUS_RW" $
           SDL.Raw.Mixer.loadMUS_RW rw 0
+
+  free (Music p) = liftIO $ SDL.Raw.Mixer.freeMusic p
 
 -- Music
 -- TODO: freeMusic
