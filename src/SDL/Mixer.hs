@@ -23,7 +23,7 @@ module SDL.Mixer
 
   -- * Configure an audio device
   , openAudio
-  , AudioSpec(..)
+  , Audio(..)
   , ChunkSize
   , Format(..)
   , Output(..)
@@ -124,17 +124,17 @@ wordToFormat = \case
   _ -> error "SDL.Mixer.wordToFormat: unknown Format."
 
 -- | An audio configuration. Use this with 'openAudio'.
-data AudioSpec = AudioSpec
+data Audio = Audio
   { audioFrequency :: Int    -- ^ A sampling frequency.
   , audioFormat    :: Format -- ^ An output sample format.
   , audioOutput    :: Output -- ^ 'Mono' or 'Stereo' output.
   } deriving (Eq, Read, Show)
 
-instance Default AudioSpec where
-  def = AudioSpec { audioFrequency = SDL.Raw.Mixer.MIX_DEFAULT_FREQUENCY
-                  , audioFormat    = FormatS16_Sys
-                  , audioOutput    = Stereo
-                  }
+instance Default Audio where
+  def = Audio { audioFrequency = SDL.Raw.Mixer.MIX_DEFAULT_FREQUENCY
+              , audioFormat    = FormatS16_Sys
+              , audioOutput    = Stereo
+              }
 
 -- | The number of sound channels in output.
 data Output = Mono | Stereo
@@ -158,8 +158,8 @@ type ChunkSize = Int
 
 -- | Initializes the @SDL2_mixer@ API. This should be the first function you
 -- call after intializing @SDL@ itself with 'SDL.Init.InitAudio'.
-openAudio :: (Functor m, MonadIO m) => AudioSpec -> ChunkSize -> m ()
-openAudio (AudioSpec {..}) chunkSize =
+openAudio :: (Functor m, MonadIO m) => Audio -> ChunkSize -> m ()
+openAudio (Audio {..}) chunkSize =
   throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
     SDL.Raw.Mixer.openAudio
       (fromIntegral audioFrequency)
@@ -173,8 +173,8 @@ closeAudio :: MonadIO m => m ()
 closeAudio = SDL.Raw.Mixer.closeAudio
 
 -- | Get the audio format in use by the opened audio device. This may or may
--- not match the 'AudioSpec' you asked for when calling 'openAudio'.
-queryAudio :: (MonadIO m) => m AudioSpec
+-- not match the 'Audio' you asked for when calling 'openAudio'.
+queryAudio :: (MonadIO m) => m Audio
 queryAudio =
   liftIO .
     alloca $ \freq ->
@@ -182,7 +182,7 @@ queryAudio =
         alloca $ \chan -> do
           void . throwIf0 "SDL.Mixer.queryAudio" "Mix_QuerySpec" $
             SDL.Raw.Mixer.queryAudio freq form chan
-          AudioSpec
+          Audio
             <$> (fromIntegral <$> peek freq)
             <*> (wordToFormat <$> peek form)
             <*> (cIntToOutput <$> peek chan)
