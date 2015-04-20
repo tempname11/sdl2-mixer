@@ -15,17 +15,17 @@ Bindings to the @SDL2_mixer@ library.
 
 module SDL.Mixer where
 
-import Prelude hiding (foldl)
-import Control.Monad (void)
+import Control.Monad          (void)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Bits ((.|.), (.&.))
-import Data.Default.Class (Default(def))
-import Data.Foldable (foldl)
-import Foreign.C.Types (CInt)
-import Foreign.Marshal.Alloc (alloca)
-import Foreign.Ptr (Ptr)
-import Foreign.Storable (Storable(..))
-import SDL.Exception (throwIfNeg_, throwIf_, throwIf0)
+import Data.Bits              ((.|.), (.&.))
+import Data.Default.Class     (Default(def))
+import Data.Foldable          (foldl)
+import Foreign.C.Types        (CInt)
+import Foreign.Marshal.Alloc  (alloca)
+import Foreign.Ptr            (Ptr)
+import Foreign.Storable       (Storable(..))
+import Prelude         hiding (foldl)
+import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0)
 
 import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
