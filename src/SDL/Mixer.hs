@@ -55,6 +55,7 @@ module SDL.Mixer
   , playOn
   , Milliseconds
   , Limit
+  , pattern NoLimit
   , playLimit
   , playing
   , playingCount
@@ -360,7 +361,7 @@ pattern Forever = 0 :: Times
 -- specific number of 'Times'. If 'AnyChannel' is used, then plays the 'Chunk'
 -- using the first available 'Channel'. Returns the 'Channel' which was used.
 playOn :: MonadIO m => Channel -> Times -> Chunk -> m Channel
-playOn = playLimit (-1)
+playOn = playLimit NoLimit
 
 -- | A time in milliseconds.
 type Milliseconds = Int
@@ -368,9 +369,12 @@ type Milliseconds = Int
 -- | An upper limit of time, in milliseconds.
 type Limit = Milliseconds
 
+-- | A lack of an upper limit.
+pattern NoLimit = (-1) :: Limit
+
 -- | Same as 'playOn', but imposes an upper limit in 'Milliseconds' to how long
 -- the 'Chunk' can play. The playing may still stop before the limit is
--- reached.
+-- reached. This is the most generic play function variant.
 playLimit :: MonadIO m => Limit -> Channel -> Times -> Chunk -> m Channel
 playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
@@ -397,10 +401,11 @@ fadeIn ms  = void . fadeInOn AnyChannel Once ms
 -- will play the 'Chunk' on the first available 'Channel'. Returns the
 -- 'Channel' that was used.
 fadeInOn :: MonadIO m => Channel -> Times -> Milliseconds -> Chunk -> m Channel
-fadeInOn = fadeInLimit (-1)
+fadeInOn = fadeInLimit NoLimit
 
 -- | Same as 'fadeInOn', but imposes an upper limit in 'Milliseconds' to how
--- long the 'Chunk' can play, similar to 'playLimit'. The
+-- long the 'Chunk' can play, similar to 'playLimit'. This is the most generic
+-- fade-in function variant.
 fadeInLimit
   :: MonadIO m =>
      Limit -> Channel -> Times -> Milliseconds -> Chunk -> m Channel
