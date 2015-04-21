@@ -521,8 +521,8 @@ channelFinishedFunPtr = unsafePerformIO $ newIORef nullFunPtr
 
 -- | Sets a callback that gets invoked each time a 'Channel' finishes playing.
 --
--- A 'Channel' finished playing both both when playback ends normally and when
--- a 'Channel' is 'halt'ed (also possibly via 'setChannels').
+-- A 'Channel' finishes playing both when playback ends normally and when it is
+-- 'halt'ed (also possibly via 'setChannels').
 --
 -- __Note: don't call other 'SDL.Mixer' functions within this callback.__
 whenChannelFinished :: MonadIO m => (Channel -> IO ()) -> m ()
