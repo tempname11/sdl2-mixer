@@ -306,7 +306,7 @@ class HasVolume a where
 
   -- | Sets a value's 'Volume'.
   --
-  -- If the value is a 'Chunk', the volume setting- only takes effect when the
+  -- If the value is a 'Chunk', the volume setting only takes effect when the
   -- 'Chunk' is used on a 'Channel', being mixed into the output.
   --
   -- In case of being used on a 'Channel', the volume setting takes effect
