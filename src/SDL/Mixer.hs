@@ -54,6 +54,7 @@ module SDL.Mixer
   , Limit
   , playLimit
   , playing
+  , playingCount
 
   -- * Music
   , musicDecoders
@@ -362,6 +363,10 @@ playLimit (Limit l) (Channel c) (Times t) (Chunk p) =
 playing :: MonadIO m => Channel -> m Bool
 playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
 
+-- | Returns how many 'Channel's are currently playing.
+playingCount :: MonadIO m => m Int
+playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
+
 -- Channels
 -- TODO: fadeInChannel
 -- TODO: fadeInChannelTimed
@@ -371,7 +376,6 @@ playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
 -- TODO: expireChannel
 -- TODO: fadeOutChannel
 -- TODO: channelFinished
--- TODO: playing
 -- TODO: paused
 -- TODO: fadingChannel
 -- TODO: getChunk
