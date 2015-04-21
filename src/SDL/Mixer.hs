@@ -49,6 +49,7 @@ module SDL.Mixer
 
   -- * Playing Chunks
   , play
+  , playForever
   , Times
   , pattern Once
   , pattern Forever
@@ -347,6 +348,11 @@ instance HasVolume Channel where
 -- | Play a 'Chunk' once, using the first available 'Channel'.
 play :: MonadIO m => Chunk -> m ()
 play = void . playOn AnyChannel Once
+
+-- | Same as 'play', but keeps playing the 'Chunk' forever. Same as 'playOn'
+-- 'AnyChannel' 'Forever'.
+playForever :: MonadIO m => Chunk -> m ()
+playForever = void . playOn AnyChannel Forever
 
 -- | How many times should a certain 'Chunk' be played?
 newtype Times = Times CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
