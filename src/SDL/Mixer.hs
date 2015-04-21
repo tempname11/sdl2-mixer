@@ -112,12 +112,12 @@ data InitFlag
 
 initToCInt :: InitFlag -> CInt
 initToCInt = \case
-  InitFLAC       -> SDL.Raw.Mixer.MIX_INIT_FLAC
-  InitMOD        -> SDL.Raw.Mixer.MIX_INIT_MOD
-  InitMODPlug    -> SDL.Raw.Mixer.MIX_INIT_MODPLUG
-  InitMP3        -> SDL.Raw.Mixer.MIX_INIT_MP3
-  InitOGG        -> SDL.Raw.Mixer.MIX_INIT_OGG
-  InitFluidSynth -> SDL.Raw.Mixer.MIX_INIT_FLUIDSYNTH
+  InitFLAC       -> SDL.Raw.Mixer.INIT_FLAC
+  InitMOD        -> SDL.Raw.Mixer.INIT_MOD
+  InitMODPlug    -> SDL.Raw.Mixer.INIT_MODPLUG
+  InitMP3        -> SDL.Raw.Mixer.INIT_MP3
+  InitOGG        -> SDL.Raw.Mixer.INIT_OGG
+  InitFluidSynth -> SDL.Raw.Mixer.INIT_FLUIDSYNTH
 
 -- | Cleans up any loaded libraries, freeing memory.
 quit :: MonadIO m => m ()
@@ -148,7 +148,7 @@ data Audio = Audio
   } deriving (Eq, Read, Show)
 
 instance Default Audio where
-  def = Audio { audioFrequency = SDL.Raw.Mixer.MIX_DEFAULT_FREQUENCY
+  def = Audio { audioFrequency = SDL.Raw.Mixer.DEFAULT_FREQUENCY
               , audioFormat    = FormatS16_Sys
               , audioOutput    = Stereo
               }

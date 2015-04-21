@@ -19,7 +19,7 @@ main = do
 
   -- initialize libraries
   SDL.initialize [SDL.InitAudio]
-  _ <- Mix.init Mix.MIX_INIT_MP3
+  _ <- Mix.init Mix.INIT_MP3
 
   let rate = 22050
       format = Mix.AUDIO_S16SYS

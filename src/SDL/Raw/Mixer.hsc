@@ -26,15 +26,15 @@ module SDL.Raw.Mixer
   , pattern SDL_MIXER_PATCHLEVEL
   , InitFlag
   , init
-  , pattern MIX_INIT_FLAC
-  , pattern MIX_INIT_MOD
-  , pattern MIX_INIT_MODPLUG
-  , pattern MIX_INIT_MP3
-  , pattern MIX_INIT_OGG
-  , pattern MIX_INIT_FLUIDSYNTH
+  , pattern INIT_FLAC
+  , pattern INIT_MOD
+  , pattern INIT_MODPLUG
+  , pattern INIT_MP3
+  , pattern INIT_OGG
+  , pattern INIT_FLUIDSYNTH
   , quit
   , Format
-  , pattern MIX_DEFAULT_FREQUENCY
+  , pattern DEFAULT_FREQUENCY
   , openAudio
   , pattern AUDIO_U8
   , pattern AUDIO_S8
@@ -46,7 +46,7 @@ module SDL.Raw.Mixer
   , pattern AUDIO_S16
   , pattern AUDIO_U16SYS
   , pattern AUDIO_S16SYS
-  , pattern MIX_DEFAULT_FORMAT
+  , pattern DEFAULT_FORMAT
   , closeAudio
   , querySpec
 
@@ -58,12 +58,13 @@ module SDL.Raw.Mixer
   , loadWAV_RW
   , quickLoadWAV
   , quickLoadRaw
-  , pattern MIX_MAX_VOLUME
+  , pattern MAX_VOLUME
   , volumeChunk
   , freeChunk
 
   -- * Channels
   , allocateChannels
+  , pattern CHANNELS
   , Channel
   , volume
   , playChannel
@@ -80,9 +81,9 @@ module SDL.Raw.Mixer
   , paused
   , Fading
   , fadingChannel
-  , pattern MIX_NO_FADING
-  , pattern MIX_FADING_OUT
-  , pattern MIX_FADING_IN
+  , pattern NO_FADING
+  , pattern FADING_OUT
+  , pattern FADING_IN
   , getChunk
 
   -- * Groups
@@ -182,34 +183,34 @@ type InitFlag = CInt
 liftF "init" "Mix_Init"
   [t|InitFlag -> IO CInt|]
 
-pattern MIX_INIT_FLAC       = (#const MIX_INIT_FLAC)
-pattern MIX_INIT_MOD        = (#const MIX_INIT_MOD)
-pattern MIX_INIT_MODPLUG    = (#const MIX_INIT_MODPLUG)
-pattern MIX_INIT_MP3        = (#const MIX_INIT_MP3)
-pattern MIX_INIT_OGG        = (#const MIX_INIT_OGG)
-pattern MIX_INIT_FLUIDSYNTH = (#const MIX_INIT_FLUIDSYNTH)
+pattern INIT_FLAC       = (#const MIX_INIT_FLAC)
+pattern INIT_MOD        = (#const MIX_INIT_MOD)
+pattern INIT_MODPLUG    = (#const MIX_INIT_MODPLUG)
+pattern INIT_MP3        = (#const MIX_INIT_MP3)
+pattern INIT_OGG        = (#const MIX_INIT_OGG)
+pattern INIT_FLUIDSYNTH = (#const MIX_INIT_FLUIDSYNTH)
 
 liftF "quit" "Mix_Quit"
   [t|IO ()|]
 
 type Format = Word16
 
-pattern MIX_DEFAULT_FREQUENCY = (#const MIX_DEFAULT_FREQUENCY)
+pattern DEFAULT_FREQUENCY = (#const MIX_DEFAULT_FREQUENCY)
 
 liftF "openAudio" "Mix_OpenAudio"
   [t|CInt -> Format -> CInt -> CInt -> IO CInt|]
 
-pattern AUDIO_U8           = (#const AUDIO_U8)
-pattern AUDIO_S8           = (#const AUDIO_S8)
-pattern AUDIO_U16LSB       = (#const AUDIO_U16LSB)
-pattern AUDIO_S16LSB       = (#const AUDIO_S16LSB)
-pattern AUDIO_U16MSB       = (#const AUDIO_U16MSB)
-pattern AUDIO_S16MSB       = (#const AUDIO_S16MSB)
-pattern AUDIO_U16          = (#const AUDIO_U16)
-pattern AUDIO_S16          = (#const AUDIO_S16)
-pattern AUDIO_U16SYS       = (#const AUDIO_U16SYS)
-pattern AUDIO_S16SYS       = (#const AUDIO_S16SYS)
-pattern MIX_DEFAULT_FORMAT = (#const MIX_DEFAULT_FORMAT)
+pattern AUDIO_U8       = (#const AUDIO_U8)
+pattern AUDIO_S8       = (#const AUDIO_S8)
+pattern AUDIO_U16LSB   = (#const AUDIO_U16LSB)
+pattern AUDIO_S16LSB   = (#const AUDIO_S16LSB)
+pattern AUDIO_U16MSB   = (#const AUDIO_U16MSB)
+pattern AUDIO_S16MSB   = (#const AUDIO_S16MSB)
+pattern AUDIO_U16      = (#const AUDIO_U16)
+pattern AUDIO_S16      = (#const AUDIO_S16)
+pattern AUDIO_U16SYS   = (#const AUDIO_U16SYS)
+pattern AUDIO_S16SYS   = (#const AUDIO_S16SYS)
+pattern DEFAULT_FORMAT = (#const MIX_DEFAULT_FORMAT)
 
 liftF "closeAudio" "Mix_CloseAudio"
   [t|IO ()|]
@@ -261,7 +262,7 @@ liftF "quickLoadWAV" "Mix_QuickLoad_WAV"
 liftF "quickLoadRaw" "Mix_QuickLoad_RAW"
   [t|Ptr Word8 -> IO (Ptr Chunk)|]
 
-pattern MIX_MAX_VOLUME = (#const MIX_MAX_VOLUME)
+pattern MAX_VOLUME = (#const MIX_MAX_VOLUME)
 
 liftF "volumeChunk" "Mix_VolumeChunk"
   [t|Ptr Chunk -> CInt -> IO CInt|]
@@ -273,6 +274,8 @@ liftF "freeChunk" "Mix_FreeChunk"
 
 liftF "allocateChannels" "Mix_AllocateChannels"
   [t|CInt -> IO CInt|]
+
+pattern CHANNELS = (#const MIX_CHANNELS)
 
 type Channel = CInt
 
@@ -317,9 +320,9 @@ liftF "paused" "Mix_Paused"
 
 type Fading = (#type Mix_Fading)
 
-pattern MIX_NO_FADING  = (#const MIX_NO_FADING)
-pattern MIX_FADING_IN  = (#const MIX_FADING_IN)
-pattern MIX_FADING_OUT = (#const MIX_FADING_OUT)
+pattern NO_FADING  = (#const MIX_NO_FADING)
+pattern FADING_IN  = (#const MIX_FADING_IN)
+pattern FADING_OUT = (#const MIX_FADING_OUT)
 
 liftF "fadingChannel" "Mix_FadingChannel"
   [t|Channel -> IO Fading|]
