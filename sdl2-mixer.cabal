@@ -47,7 +47,7 @@ library
   default-language:
     Haskell2010
 
-executable sdl2-mixer-example
+executable sdl2-mixer-jumbled
   build-depends:
     base               >= 4.7 && < 5,
     data-default-class >= 0.0.1,

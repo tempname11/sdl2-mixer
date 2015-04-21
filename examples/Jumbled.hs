@@ -17,7 +17,7 @@ main = do
 
   args <- getArgs
   case args of
-    [] -> putStrLn "usage: cabal run AUDIO_FILE_PATH..." >> exitFailure
+    [] -> putStrLn "usage: cabal run sdl2-mixer-jumbled FILE..." >> exitFailure
     xs -> runExample xs
 
   SDL.Mixer.closeAudio
