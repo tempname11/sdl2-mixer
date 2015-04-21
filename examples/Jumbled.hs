@@ -6,33 +6,33 @@ import System.Environment (getArgs)
 import System.Exit        (exitFailure)
 
 import qualified SDL
-import qualified SDL.Mixer
+import qualified SDL.Mixer as Mix
 
 main :: IO ()
 main = do
   SDL.initialize [SDL.InitAudio]
-  SDL.Mixer.openAudio def 256
+  Mix.openAudio def 256
 
   putStr "Available chunk decoders: "
-  print =<< SDL.Mixer.chunkDecoders
+  print =<< Mix.chunkDecoders
 
   args <- getArgs
   case args of
     [] -> putStrLn "Usage: cabal run sdl2-mixer-jumbled FILE..." >> exitFailure
     xs -> runExample xs
 
-  SDL.Mixer.closeAudio
+  Mix.closeAudio
   SDL.quit
 
 -- | Play each of the sounds at the same time!
 runExample :: [FilePath] -> IO ()
 runExample paths = do
-  SDL.Mixer.setChannels $ length paths
-  chunks <- mapM SDL.Mixer.load paths
-  mapM_ (SDL.Mixer.playAt SDL.Mixer.AnyChannel SDL.Mixer.Once) chunks
-  delayWhile $ SDL.Mixer.playing SDL.Mixer.AnyChannel
-  SDL.Mixer.setChannels 0
-  mapM_ SDL.Mixer.free chunks
+  Mix.setChannels $ length paths
+  chunks <- mapM Mix.load paths
+  mapM_ (Mix.playAt Mix.AnyChannel Mix.Once) chunks
+  delayWhile $ Mix.playing Mix.AnyChannel
+  Mix.setChannels 0
+  mapM_ Mix.free chunks
 
 delayWhile :: IO Bool -> IO ()
 delayWhile check = loop'
