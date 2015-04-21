@@ -99,10 +99,13 @@ import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
 
 -- | Initialize the library by loading support for a certain set of
--- sample/music formats. You may call this function multiple times. Note that
--- calling this is not strictly necessary: support for a certain format will be
--- loaded automatically when attempting to load data in that format. Using
--- 'initialize' allows you to decide /when/ to load support.
+-- sample/music formats.
+--
+-- Note that calling this is not strictly necessary: support for a certain
+-- format will be loaded automatically when attempting to load data in that
+-- format. Using 'initialize' allows you to decide /when/ to load support.
+--
+-- You may call this function multiple times.
 initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
 initialize flags = do
   let raw = foldl (\a b -> a .|. initToCInt b) 0 flags
@@ -139,8 +142,10 @@ version = liftIO $ do
   SDL.Raw.Version major minor patch <- peek =<< SDL.Raw.Mixer.getVersion
   return (fromIntegral major, fromIntegral minor, fromIntegral patch)
 
--- | Initializes the @SDL2_mixer@ API. This should be the first function you
--- call after intializing @SDL@ itself with 'SDL.Init.InitAudio'.
+-- | Initializes the @SDL2_mixer@ API.
+--
+-- This should be the first function you call after intializing @SDL@ itself
+-- with 'SDL.Init.InitAudio'.
 openAudio :: (Functor m, MonadIO m) => Audio -> ChunkSize -> m ()
 openAudio (Audio {..}) chunkSize =
   throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
@@ -163,13 +168,20 @@ instance Default Audio where
               , audioOutput    = cIntToOutput SDL.Raw.Mixer.DEFAULT_CHANNELS
               }
 
--- | A default 'Audio' configuration. Same as 'Data.Default.Class.def'.
+-- | A default 'Audio' configuration.
+--
+-- Same as 'Data.Default.Class.def'.
+--
+-- Uses 22050 as the 'audioFrequency', 'FormatS16_Sys' as the 'audioFormat' and
+-- 'Stereo' as the 'audioOutput'.
 defaultAudio :: Audio
 defaultAudio = def
 
--- | The size of each mixed sample. The smaller this is, the more your hooks
--- will be called. If this is made too small on a slow system, the sounds may
--- skip. If made too large, sound effects could lag.
+-- | The size of each mixed sample.
+--
+-- The smaller this is, the more your hooks will be called. If this is made too
+-- small on a slow system, the sounds may skip. If made too large, sound
+-- effects could lag.
 type ChunkSize = Int
 
 -- | A sample format.
@@ -222,8 +234,10 @@ cIntToOutput = \case
   2 -> Stereo
   _ -> error "SDL.Mixer.cIntToOutput: unknown number of channels."
 
--- | Get the audio format in use by the opened audio device. This may or may
--- not match the 'Audio' you asked for when calling 'openAudio'.
+-- | Get the audio format in use by the opened audio device.
+--
+-- This may or may not match the 'Audio' you asked for when calling
+-- 'openAudio'.
 queryAudio :: (MonadIO m) => m Audio
 queryAudio =
   liftIO .
@@ -237,15 +251,18 @@ queryAudio =
             <*> (wordToFormat <$> peek form)
             <*> (cIntToOutput <$> peek chan)
 
--- | Shut down and clean up the @SDL2_mixer@ API. After calling this, all audio
--- stops and no functions except 'openAudio' should be used.
+-- | Shut down and clean up the @SDL2_mixer@ API.
+--
+-- After calling this, all audio stops and no functions except 'openAudio'
+-- should be used.
 closeAudio :: MonadIO m => m ()
 closeAudio = SDL.Raw.Mixer.closeAudio
 
 -- | A class of all values that can be loaded from some source. You can load
--- both 'Chunk's and 'Music' this way. Note that you must call 'openAudio'
--- before using these, since they have to know the audio configuration to
--- properly convert the data for playback.
+-- both 'Chunk's and 'Music' this way.
+--
+-- Note that you must call 'openAudio' before using these, since they have to
+-- know the audio configuration to properly convert the data for playback.
 class Loadable a where
 
   -- | Load the value from a 'ByteString'.
@@ -255,12 +272,15 @@ class Loadable a where
   load :: MonadIO m => FilePath -> m a
   load = (decode =<<) . liftIO . readFile
 
-  -- | Frees the value's memory. It should no longer be used. Note that you
-  -- shouldn't free those values which are currently playing.
+  -- | Frees the value's memory. It should no longer be used.
+  --
+  -- Note that __you shouldn't free those values that are currently playing__.
   free :: MonadIO m => a -> m ()
 
--- | A volume, where 0 is silent and 128 loudest. 'Volume's lesser than 0 or
--- greater than 128 function as if they are 0 and 128, respectively.
+-- | A volume, where 0 is silent and 128 loudest.
+--
+-- 'Volume's lesser than 0 or greater than 128 function as if they are 0 and
+-- 128, respectively.
 type Volume = Int
 
 volumeToCInt :: Volume -> CInt
@@ -269,23 +289,29 @@ volumeToCInt = fromIntegral . max 0 . min 128
 -- | A class of all values that have a 'Volume'.
 class HasVolume a where
 
-  -- | Gets the value's currently set 'Volume'. If the value is a 'Channel' and
-  -- 'AllChannels' is used, gets the /average/ 'Volume' of all 'Channel's.
+  -- | Gets the value's currently set 'Volume'.
+  --
+  -- If the value is a 'Channel' and 'AllChannels' is used, gets the /average/
+  -- 'Volume' of all 'Channel's.
   getVolume :: MonadIO m => a -> m Volume
 
-  -- | Sets a value's 'Volume'. If the value is a 'Chunk', the volume setting
-  -- only takes effect when the 'Chunk' is used on a 'Channel', being mixed
-  -- into the output. In case of a 'Channel', the volume setting takes effect
+  -- | Sets a value's 'Volume'.
+  --
+  -- If the value is a 'Chunk', the volume setting- only takes effect when the
+  -- 'Chunk' is used on a 'Channel', being mixed into the output.
+  --
+  -- In case of being used on a 'Channel', the volume setting takes effect
   -- during the final mix, along with the 'Chunk' volume. For instance, setting
   -- the 'Volume' of a certain 'Channel' to 64 will halve the volume of all
   -- 'Chunk's played on that 'Channel'. If 'AllChannels' is used, sets all
-  -- 'Channel's to the given 'Volume'.
+  -- 'Channel's to the given 'Volume' instead.
   setVolume :: MonadIO m => Volume -> a -> m ()
 
--- | Returns the names of all chunk decoders currently available. These depend
--- on the availability of shared libraries for each of the formats. The list
--- may contain any of the following, and possibly others: @WAVE@, @AIFF@,
--- @VOC@, @OFF@, @FLAC@, @MP3@.
+-- | Returns the names of all chunk decoders currently available.
+--
+-- These depend on the availability of shared libraries for each of the
+-- formats. The list may contain any of the following, and possibly others:
+-- @WAVE@, @AIFF@, @VOC@, @OFF@, @FLAC@, @MP3@.
 chunkDecoders :: MonadIO m => m [String]
 chunkDecoders =
   liftIO $ do
@@ -310,9 +336,16 @@ instance HasVolume Chunk where
   getVolume   (Chunk p) = fmap fromIntegral $ SDL.Raw.Mixer.volumeChunk p (-1)
   setVolume v (Chunk p) = void . SDL.Raw.Mixer.volumeChunk p $ volumeToCInt v
 
--- | A channel for mixing. The first channel is 0, the second 1 and so on. Note
--- that you cannot use these if you haven't created them in advance with
--- 'setChannels'. The starting 'Volume' of each 'Channel' is the maximum: 128.
+-- | A mixing channel.
+--
+-- Use the 'Integral' instance to define these: the first channel is 0, the
+-- second 1 and so on.
+--
+-- The default number of 'Channel's available at startup is 8, so note that you
+-- cannot usemore than these starting 8 if you haven't created more with
+-- 'setChannels'.
+--
+-- The starting 'Volume' of each 'Channel' is the maximum: 128.
 newtype Channel = Channel CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 
 instance Show Channel where
@@ -320,12 +353,17 @@ instance Show Channel where
     AllChannels -> "AllChannels"
     Channel c   -> "Channel " ++ show c
 
--- | Prepares a given number of 'Channel's for use. There are 8 such 'Channel's
--- already prepared for use after 'openAudio' is called. You may call this
--- multiple times, even with sounds playing. If allocating - lesser number of
--- 'Channel's in a future call, the higher channels will be stopped, their
--- finished hooks called, and then freed. Passing in 0 or less will therefore
--- stop and free all mixing channels (but any 'Music' will still be playing).
+-- | Prepares a given number of 'Channel's for use.
+--
+-- There are 8 such 'Channel's already prepared for use after 'openAudio' is
+-- called.
+--
+-- You may call this multiple times, even with sounds playing. If setting a
+-- lesser number of 'Channel's than are currently in use, the higher 'Channel's
+-- will be stopped, their finished hooks called, and their memory freed.
+-- Passing in 0 or less will therefore stop and free all mixing channels.
+--
+-- Any 'Music' playing is not affected by this function.
 setChannels :: MonadIO m => Int -> m ()
 setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 
@@ -334,6 +372,7 @@ getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
 -- | Use this value when you wish to perform an operation on /all/ 'Channel's.
+--
 -- For more information, see each of the functions accepting a 'Channel'.
 pattern AllChannels = (-1) :: Channel
 
@@ -359,8 +398,12 @@ pattern Once = 1 :: Times
 pattern Forever = 0 :: Times
 
 -- | Same as 'play', but plays the 'Chunk' using a given 'Channel' a certain
--- number of 'Times'. If 'AllChannels' is used, then plays the 'Chunk' using
--- the first available 'Channel' instead. Returns the 'Channel' which was used.
+-- number of 'Times'.
+--
+-- If 'AllChannels' is used, then plays the 'Chunk' using the first available
+-- 'Channel' instead.
+--
+-- Returns the 'Channel' that was used.
 playOn :: MonadIO m => Channel -> Times -> Chunk -> m Channel
 playOn = playLimit NoLimit
 
@@ -374,15 +417,20 @@ type Limit = Milliseconds
 pattern NoLimit = (-1) :: Limit
 
 -- | Same as 'playOn', but imposes an upper limit in 'Milliseconds' to how long
--- the 'Chunk' can play. The playing may still stop before the limit is
--- reached. This is the most generic play function variant.
+-- the 'Chunk' can play.
+--
+-- The playing may still stop before the limit is reached.
+--
+-- This is the most generic play function variant.
 playLimit :: MonadIO m => Limit -> Channel -> Times -> Chunk -> m Channel
 playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
     fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) (fromIntegral l)
 
--- | Returns whether the given 'Channel' is playing or not. If 'AllChannels' is
--- used, this returns whether /any/ of the channels is currently playing.
+-- | Returns whether the given 'Channel' is playing or not.
+--
+-- If 'AllChannels' is used, this returns whether /any/ of the channels is
+-- currently playing.
 playing :: MonadIO m => Channel -> m Bool
 playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
 
@@ -392,21 +440,27 @@ playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
 
 -- | Same as 'play', but fades in the 'Chunk' by making the 'Channel' 'Volume'
 -- start at 0 and rise to a full 128 over the course of a given number of
--- 'Milliseconds'. The 'Chunk' may end playing before the fade-in is complete,
--- if it doesn't last as long as the given fade-in time.
+-- 'Milliseconds'.
+--
+-- The 'Chunk' may end playing before the fade-in is complete, if it doesn't
+-- last as long as the given fade-in time.
 fadeIn :: MonadIO m => Milliseconds -> Chunk -> m ()
 fadeIn ms  = void . fadeInOn AllChannels Once ms
 
 -- | Same as 'fadeIn', but allows you to specify the 'Channel' to play on and
--- how many 'Times' to play it, similar to 'playOn'. If 'AllChannels' is used,
--- will play the 'Chunk' on the first available 'Channel'. Returns the
--- 'Channel' that was used.
+-- how many 'Times' to play it, similar to 'playOn'.
+--
+-- If 'AllChannels' is used, will play the 'Chunk' on the first available
+-- 'Channel'.
+--
+-- Returns the 'Channel' that was used.
 fadeInOn :: MonadIO m => Channel -> Times -> Milliseconds -> Chunk -> m Channel
 fadeInOn = fadeInLimit NoLimit
 
 -- | Same as 'fadeInOn', but imposes an upper limit in 'Milliseconds' to how
--- long the 'Chunk' can play, similar to 'playLimit'. This is the most generic
--- fade-in function variant.
+-- long the 'Chunk' can play, similar to 'playLimit'.
+--
+-- This is the most generic fade-in function variant.
 fadeInLimit
   :: MonadIO m =>
      Limit -> Channel -> Times -> Milliseconds -> Chunk -> m Channel
@@ -417,14 +471,18 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
         c p (t - 1) (fromIntegral ms) (fromIntegral l)
 
 -- | Gradually fade out a given playing 'Channel' during the next
--- 'Milliseconds', even if it is 'pause'd. If 'AllChannels' is used, fades out
--- all the playing 'Channel's instead.
+-- 'Milliseconds', even if it is 'pause'd.
+--
+-- If 'AllChannels' is used, fades out all the playing 'Channel's instead.
 fadeOut :: MonadIO m => Milliseconds -> Channel -> m ()
 fadeOut ms (Channel c) = void $ SDL.Raw.Mixer.fadeOutChannel c $ fromIntegral ms
 
--- | Pauses the given 'Channel', if it is actively playing. If 'AllChannels' is
--- used, will pause all actively playing 'Channel's instead. Note that 'pause'd
--- 'Channel's may still be 'halt'ed.
+-- | Pauses the given 'Channel', if it is actively playing.
+--
+-- If 'AllChannels' is used, will pause all actively playing 'Channel's
+-- instead.
+--
+-- Note that 'pause'd 'Channel's may still be 'halt'ed.
 pause :: MonadIO m => Channel -> m ()
 pause (Channel c) = SDL.Raw.Mixer.pause c
 
@@ -437,6 +495,7 @@ halt :: MonadIO m => Channel -> m ()
 halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
 
 -- | Same as 'halt', but only does so after a certain number of 'Milliseconds'.
+--
 -- If 'AllChannels' is used, it will halt all the 'Channel's after the given
 -- time instead.
 haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
@@ -460,10 +519,12 @@ haltAfter ms (Channel c) =
 -- TODO: fadeOutGroup
 -- TODO: haltGroup
 
--- | Returns the names of all music decoders currently available. These depend
--- on the availability of shared libraries for each of the formats. The list
--- may contain any of the following, and possibly others: @WAVE@, @MODPLUG@,
--- @MIKMOD@, @TIMIDITY@, @FLUIDSYNTH@, @NATIVEMIDI@, @OGG@, @FLAC@, @MP3@.
+-- | Returns the names of all music decoders currently available.
+--
+-- These depend on the availability of shared libraries for each of the
+-- formats. The list may contain any of the following, and possibly others:
+-- @WAVE@, @MODPLUG@, @MIKMOD@, @TIMIDITY@, @FLUIDSYNTH@, @NATIVEMIDI@, @OGG@,
+-- @FLAC@, @MP3@.
 musicDecoders :: MonadIO m => m [String]
 musicDecoders =
   liftIO $ do
