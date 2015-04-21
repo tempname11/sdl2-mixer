@@ -58,6 +58,9 @@ module SDL.Mixer
   , playLimit
   , playing
   , playingCount
+  , fadeIn
+  , fadeInOn
+  , fadeInLimit
 
   -- * Music
   , musicDecoders
@@ -380,6 +383,31 @@ playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
 -- | Returns how many 'Channel's are currently playing.
 playingCount :: MonadIO m => m Int
 playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
+
+-- | Same as 'play', but fades in the 'Chunk' by making the 'Channel' 'Volume'
+-- start at 0 and rise to a full 128 over the course of a given number of
+-- 'Milliseconds'. The 'Chunk' may end playing before the fade-in is complete,
+-- if it doesn't last as long as the given fade-in time.
+fadeIn :: MonadIO m => Milliseconds -> Chunk -> m ()
+fadeIn ms  = void . fadeInOn AnyChannel Once ms
+
+-- | Same as 'fadeIn', but allows you to specify the 'Channel' to play on and
+-- how many 'Times' to play it, similar to 'playOn'. If 'AnyChannel' is used,
+-- will play the 'Chunk' on the first available 'Channel'. Returns the
+-- 'Channel' that was used.
+fadeInOn :: MonadIO m => Channel -> Times -> Milliseconds -> Chunk -> m Channel
+fadeInOn = fadeInLimit (-1)
+
+-- | Same as 'fadeInOn', but imposes an upper limit in 'Milliseconds' to how
+-- long the 'Chunk' can play, similar to 'playLimit'. The
+fadeInLimit
+  :: MonadIO m =>
+     Limit -> Channel -> Times -> Milliseconds -> Chunk -> m Channel
+fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
+  throwIfNeg "SDL.Mixer.fadeInLimit" "Mix_FadeInChannelTimed" $
+    fromIntegral <$>
+      SDL.Raw.Mixer.fadeInChannelTimed
+        c p (t - 1) (fromIntegral ms) (fromIntegral l)
 
 -- Channels
 -- TODO: fadeInChannel
