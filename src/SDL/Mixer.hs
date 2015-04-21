@@ -312,11 +312,12 @@ instance Show Channel where
     AnyChannel -> "AnyChannel"
     Channel c  -> "Channel " ++ show c
 
--- | Prepares a given number of 'Channel's for use. You may call this multiple
--- times, even with sounds playing. If allocating a lesser number of 'Channel's
--- in a future call, the higher channels will be stopped, their finished hooks
--- called, and then freed. Passing in 0 or less will therefore stop and free
--- all mixing channels (but any 'Music' will still be playing).
+-- | Prepares a given number of 'Channel's for use. By default, there are 8
+-- such 'Channel's available. You may call this multiple times, even with
+-- sounds playing. If allocating a lesser number of 'Channel's in a future
+-- call, the higher channels will be stopped, their finished hooks called, and
+-- then freed. Passing in 0 or less will therefore stop and free all mixing
+-- channels (but any 'Music' will still be playing).
 setChannels :: MonadIO m => Int -> m ()
 setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 
