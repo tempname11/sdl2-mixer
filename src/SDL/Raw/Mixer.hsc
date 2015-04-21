@@ -78,6 +78,7 @@ module SDL.Raw.Mixer
   , expireChannel
   , fadeOutChannel
   , channelFinished
+  , wrapChannelCallback
   , playing
   , paused
   , Fading
@@ -310,6 +311,9 @@ liftF "expireChannel" "Mix_ExpireChannel"
 
 liftF "fadeOutChannel" "Mix_FadeOutChannel"
   [t|Channel -> CInt -> IO CInt|]
+
+foreign import ccall "wrapper"
+  wrapChannelCallback :: (Channel -> IO ()) -> IO (FunPtr (Channel -> IO ()))
 
 liftF "channelFinished" "Mix_ChannelFinished"
   [t|FunPtr (Channel -> IO ()) -> IO ()|]

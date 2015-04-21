@@ -47,6 +47,7 @@ module SDL.Mixer
   , setChannels
   , getChannels
   , playedLast
+  , whenChannelFinished
 
   -- * Music
   , musicDecoders
@@ -188,9 +189,9 @@ defaultAudio = def
 
 -- | The size of each mixed sample.
 --
--- The smaller this is, the more your hooks will be called. If this is made too
--- small on a slow system, the sounds may skip. If made too large, sound
--- effects could lag.
+-- The smaller this is, the more often callbacks will be invoked. If this is
+-- made too small on a slow system, the sounds may skip. If made too large,
+-- sound effects could lag.
 type ChunkSize = Int
 
 -- | A sample format.
@@ -369,7 +370,7 @@ instance Show Channel where
 --
 -- You may call this multiple times, even with sounds playing. If setting a
 -- lesser number of 'Channel's than are currently in use, the higher 'Channel's
--- will be stopped, their finished hooks called, and their memory freed.
+-- will be stopped, their finish callbacks invoked, and their memory freed.
 -- Passing in 0 or less will therefore stop and free all mixing channels.
 --
 -- Any 'Music' playing is not affected by this function.
@@ -509,6 +510,23 @@ halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
 haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
 haltAfter ms (Channel c) =
   void . SDL.Raw.Mixer.expireChannel c $ fromIntegral ms
+
+-- | Sets a callback that gets invoked each time a 'Channel' finishes playing.
+--
+-- A 'Channel' finished playing both both when playback ends normally and when
+-- a 'Channel' is 'halt'ed (also possibly via 'setChannels').
+--
+-- __Note: don't call other 'SDL.Mixer' functions within this callback.__
+--
+-- Additional note: don't call this function too many times, since, due to an
+-- implementation detail, it currently leaks memory. So far, the optimal
+-- solution is to call it at most once.
+whenChannelFinished :: MonadIO m => (Channel -> IO ()) -> m ()
+whenChannelFinished callback = do
+  let callback' = callback . Channel
+  callbackRaw <- liftIO $ SDL.Raw.Mixer.wrapChannelCallback callback'
+  SDL.Raw.Mixer.channelFinished callbackRaw
+  -- liftIO $ freeHaskellFunPtr callbackRaw -- FIXME: This needs to be done!
 
 -- | Returns whether the given 'Channel' is playing or not.
 --

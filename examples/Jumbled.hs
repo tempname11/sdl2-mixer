@@ -28,6 +28,7 @@ main = do
 runExample :: [FilePath] -> IO ()
 runExample paths = do
   Mix.setChannels $ length paths
+  Mix.whenChannelFinished $ \c -> putStrLn $ show c ++ " finished playing!"
   chunks <- mapM Mix.load paths
   mapM_ Mix.play chunks
   delayWhile $ Mix.playing Mix.AllChannels
@@ -39,4 +40,4 @@ delayWhile check = loop'
   where
     loop' = do
       still <- check
-      when still $ SDL.delay 100 >> delayWhile check
+      when still $ SDL.delay 300 >> delayWhile check
