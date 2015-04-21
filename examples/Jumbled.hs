@@ -18,7 +18,7 @@ main = do
 
   args <- getArgs
   case args of
-    [] -> putStrLn "usage: cabal run sdl2-mixer-jumbled FILE..." >> exitFailure
+    [] -> putStrLn "Usage: cabal run sdl2-mixer-jumbled FILE..." >> exitFailure
     xs -> runExample xs
 
   SDL.Mixer.closeAudio
@@ -29,7 +29,7 @@ runExample :: [FilePath] -> IO ()
 runExample paths = do
   SDL.Mixer.setChannels $ length paths
   chunks <- mapM SDL.Mixer.load paths
-  mapM_ (SDL.Mixer.play SDL.Mixer.AnyChannel SDL.Mixer.Once) chunks
+  mapM_ (SDL.Mixer.playAt SDL.Mixer.AnyChannel SDL.Mixer.Once) chunks
   delayWhile $ SDL.Mixer.playing SDL.Mixer.AnyChannel
   SDL.Mixer.setChannels 0
   mapM_ SDL.Mixer.free chunks
