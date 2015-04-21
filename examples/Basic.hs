@@ -1,6 +1,7 @@
 import qualified SDL.Mixer as Mix
 import qualified SDL
 
+import Data.Default.Class
 import System.Environment
 import System.Exit
 
@@ -10,9 +11,9 @@ main = do
   fileName <- do
     args <- getArgs
     case args of
-      [arg] -> return arg
+      (arg:_) -> return arg
       _ -> do
-        putStrLn "Usage: <cmd> <sound filename>"
+        putStrLn "Usage: cabal run sdl2-mixer-basic <sound filename>"
         exitWith $ ExitFailure 1
 
   -- initialize libraries
@@ -20,19 +21,19 @@ main = do
   Mix.initialize [Mix.InitMP3]
 
   -- open device
-  Mix.openAudio Mix.defaultSpec 256
+  Mix.openAudio def 256
 
   -- open file
   sound <- Mix.load fileName
 
   -- play file
-  channel <- Mix.play sound
+  Mix.play sound
 
   -- wait until finished
-  whileTrueM $ Mix.playing channel
+  whileTrueM $ Mix.playing Mix.AnyChannel
 
  -- free resources
-  Mix.freeChunk sound
+  Mix.free sound
 
   -- close device
   Mix.closeAudio
