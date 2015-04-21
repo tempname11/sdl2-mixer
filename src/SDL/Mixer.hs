@@ -67,6 +67,10 @@ module SDL.Mixer
   , pauseAll
   , resume
   , resumeAll
+  , halt
+  , haltAfter
+  , haltAll
+  , haltAllAfter
 
   -- * Music
   , musicDecoders
@@ -442,6 +446,24 @@ resume (Channel c) = SDL.Raw.Mixer.resume $ max 0 c
 resumeAll :: MonadIO m => m ()
 resumeAll = SDL.Raw.Mixer.resume (-1)
 
+-- | Halts playback on a given 'Channel'. If 'AnyChannel' is used, will halt
+-- the first 'Channel'.
+halt :: MonadIO m => Channel -> m ()
+halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel $ max 0 c
+
+-- | Halts all 'Channel's.
+haltAll :: MonadIO m => m ()
+haltAll = void $ SDL.Raw.Mixer.haltChannel (-1)
+
+-- | Same as 'halt', but only does so after a certain number of 'Milliseconds'.
+-- If 'AnyChannel' is used, it will halt the first 'Channel'.
+haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
+haltAfter ms (Channel c) =
+  void . SDL.Raw.Mixer.expireChannel (max 0 c) $ fromIntegral ms
+
+-- | Same as 'haltAfter', but does so to all 'Channel's.
+haltAllAfter :: MonadIO m => Milliseconds -> m ()
+haltAllAfter = void . SDL.Raw.Mixer.expireChannel (-1) . fromIntegral
 
 -- Channels
 -- TODO: resume
