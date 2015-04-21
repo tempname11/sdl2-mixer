@@ -47,10 +47,11 @@ module SDL.Mixer
   , pattern AnyChannel
 
   -- * Playing Chunks
+  , play
   , Times
   , pattern Once
   , pattern Forever
-  , play
+  , playAt
   , Limit
   , playLimit
   , playing
@@ -331,6 +332,10 @@ instance HasVolume Channel where
   getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
   setVolume v (Channel c) = void . SDL.Raw.Mixer.volume c $ volumeToCInt v
 
+-- | Play a 'Chunk' once, using the first available 'Channel'.
+play :: MonadIO m => Chunk -> m ()
+play = void . playLimit (-1) AnyChannel Once
+
 -- | How many times should a certain 'Chunk' be played?
 newtype Times = Times CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 
@@ -340,12 +345,11 @@ pattern Once = 1 :: Times
 -- | A shorthand for looping a 'Chunk' forever.
 pattern Forever = 0 :: Times
 
-{-# INLINE play #-}
--- | Play a 'Chunk', playing it a certain number of 'Times'. If 'AnyChannel' is
--- used, this will play the 'Chunk' on the first available 'Channel'. Returns
--- the 'Channel' the 'Chunk' is played on.
-play :: MonadIO m => Channel -> Times -> Chunk -> m Channel
-play = playLimit (-1)
+-- | Same as 'play', but plays the 'Chunk' using a specific 'Channel' a
+-- specific number of 'Times'. If 'AnyChannel' is used, then plays the 'Chunk'
+-- using the first available 'Channel'. Returns the 'Channel' which was used.
+playAt :: MonadIO m => Channel -> Times -> Chunk -> m Channel
+playAt = playLimit (-1)
 
 -- | An upper limit, in milliseconds, on the playing of a certain 'Chunk'.
 newtype Limit = Limit CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
