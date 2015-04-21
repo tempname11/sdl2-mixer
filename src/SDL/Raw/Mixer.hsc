@@ -34,7 +34,9 @@ module SDL.Raw.Mixer
   , pattern INIT_FLUIDSYNTH
   , quit
   , Format
+  , pattern DEFAULT_FORMAT
   , pattern DEFAULT_FREQUENCY
+  , pattern DEFAULT_CHANNELS
   , openAudio
   , pattern AUDIO_U8
   , pattern AUDIO_S8
@@ -46,7 +48,6 @@ module SDL.Raw.Mixer
   , pattern AUDIO_S16
   , pattern AUDIO_U16SYS
   , pattern AUDIO_S16SYS
-  , pattern DEFAULT_FORMAT
   , closeAudio
   , querySpec
 
@@ -196,6 +197,7 @@ liftF "quit" "Mix_Quit"
 type Format = Word16
 
 pattern DEFAULT_FREQUENCY = (#const MIX_DEFAULT_FREQUENCY)
+pattern DEFAULT_CHANNELS  = (#const MIX_DEFAULT_CHANNELS)
 
 liftF "openAudio" "Mix_OpenAudio"
   [t|CInt -> Format -> CInt -> CInt -> IO CInt|]

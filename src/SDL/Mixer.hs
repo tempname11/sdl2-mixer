@@ -149,8 +149,8 @@ data Audio = Audio
 
 instance Default Audio where
   def = Audio { audioFrequency = SDL.Raw.Mixer.DEFAULT_FREQUENCY
-              , audioFormat    = FormatS16_Sys
-              , audioOutput    = Stereo
+              , audioFormat    = wordToFormat SDL.Raw.Mixer.DEFAULT_FORMAT
+              , audioOutput    = cIntToOutput SDL.Raw.Mixer.DEFAULT_CHANNELS
               }
 
 -- | The size of each mixed sample. The smaller this is, the more your hooks
