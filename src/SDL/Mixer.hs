@@ -89,21 +89,23 @@ module SDL.Mixer
 
   ) where
 
-import Control.Monad          (void, forM)
+import Control.Monad          (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Bits              ((.|.), (.&.))
 import Data.ByteString        (ByteString, readFile)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Data.Default.Class     (Default(def))
 import Data.Foldable          (foldl)
+import Data.IORef             (IORef, newIORef, readIORef, writeIORef)
 import Foreign.C.String       (peekCString)
 import Foreign.C.Types        (CInt)
 import Foreign.Marshal.Alloc  (alloca)
-import Foreign.Ptr            (Ptr, castPtr, nullPtr)
+import Foreign.Ptr            (Ptr, FunPtr, castPtr, nullFunPtr, nullPtr, freeHaskellFunPtr)
 import Foreign.Storable       (Storable(..))
 import Prelude         hiding (foldl, readFile)
 import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
 import SDL.Raw.Filesystem     (rwFromConstMem)
+import System.IO.Unsafe       (unsafePerformIO)
 
 import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
@@ -511,22 +513,32 @@ haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
 haltAfter ms (Channel c) =
   void . SDL.Raw.Mixer.expireChannel c $ fromIntegral ms
 
+-- Quackery of the highest order! We keep track of a pointer we gave SDL_mixer,
+-- so we can free it at a later time. May the gods have mercy...
+{-# NOINLINE channelFinishedFunPtr #-}
+channelFinishedFunPtr :: IORef (FunPtr (SDL.Raw.Mixer.Channel -> IO ()))
+channelFinishedFunPtr = unsafePerformIO $ newIORef nullFunPtr
+
 -- | Sets a callback that gets invoked each time a 'Channel' finishes playing.
 --
 -- A 'Channel' finished playing both both when playback ends normally and when
 -- a 'Channel' is 'halt'ed (also possibly via 'setChannels').
 --
 -- __Note: don't call other 'SDL.Mixer' functions within this callback.__
---
--- Additional note: don't call this function too many times, since, due to an
--- implementation detail, it currently leaks memory. So far, the optimal
--- solution is to call it at most once.
 whenChannelFinished :: MonadIO m => (Channel -> IO ()) -> m ()
-whenChannelFinished callback = do
+whenChannelFinished callback = liftIO $ do
+
+  -- Sets the callback.
   let callback' = callback . Channel
-  callbackRaw <- liftIO $ SDL.Raw.Mixer.wrapChannelCallback callback'
+  callbackRaw <- SDL.Raw.Mixer.wrapChannelCallback callback'
   SDL.Raw.Mixer.channelFinished callbackRaw
-  -- liftIO $ freeHaskellFunPtr callbackRaw -- FIXME: This needs to be done!
+
+  -- Free the function we set last time, if any.
+  lastFunPtr <- readIORef channelFinishedFunPtr
+  when (lastFunPtr /= nullFunPtr) $ freeHaskellFunPtr lastFunPtr
+
+  -- Then remember the new one. And weep in shame.
+  writeIORef channelFinishedFunPtr callbackRaw
 
 -- | Returns whether the given 'Channel' is playing or not.
 --
