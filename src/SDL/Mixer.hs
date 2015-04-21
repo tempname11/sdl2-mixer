@@ -64,6 +64,9 @@ module SDL.Mixer
   , fadeInOn
   , fadeInLimit
   , pause
+  , pauseAll
+  , resume
+  , resumeAll
 
   -- * Music
   , musicDecoders
@@ -421,9 +424,24 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
       SDL.Raw.Mixer.fadeInChannelTimed
         c p (t - 1) (fromIntegral ms) (fromIntegral l)
 
--- | Pauses the given 'Channel'.
+-- | Pauses the given 'Channel', if it is actively playing. It may still be
+-- 'halt'ed. If 'AnyChannel' is used, will pause the first 'Channel'.
 pause :: MonadIO m => Channel -> m ()
-pause (Channel c) = SDL.Raw.Mixer.pause c
+pause (Channel c) = SDL.Raw.Mixer.pause $ max 0 c
+
+-- | Pauses all actively playing 'Channel's. They may still be 'halt'ed.
+pauseAll :: MonadIO m => m ()
+pauseAll = SDL.Raw.Mixer.pause (-1)
+
+-- | Resumes playing a given 'Channel'. If 'AnyChannel' is used, will resume
+-- the first 'Channel'.
+resume :: MonadIO m => Channel -> m ()
+resume (Channel c) = SDL.Raw.Mixer.resume $ max 0 c
+
+-- | Resumes all paused 'Channel's.
+resumeAll :: MonadIO m => m ()
+resumeAll = SDL.Raw.Mixer.resume (-1)
+
 
 -- Channels
 -- TODO: resume
