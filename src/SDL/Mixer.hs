@@ -45,7 +45,7 @@ module SDL.Mixer
   , Channel
   , setChannels
   , getChannels
-  , pattern AnyChannel
+  , pattern AllChannels
 
   -- * Playing Chunks
   , play
@@ -64,15 +64,10 @@ module SDL.Mixer
   , fadeInOn
   , fadeInLimit
   , fadeOut
-  , fadeOutAll
   , pause
-  , pauseAll
   , resume
-  , resumeAll
   , halt
-  , haltAfter
   , haltAll
-  , haltAllAfter
 
   -- * Music
   , musicDecoders
@@ -81,8 +76,6 @@ module SDL.Mixer
   -- * Setting the volume
   , Volume
   , HasVolume(..)
-  , setVolumeAll
-  , getVolumeAll
 
   ) where
 
@@ -276,7 +269,8 @@ volumeToCInt = fromIntegral . max 0 . min 128
 -- | A class of all values that have a 'Volume'.
 class HasVolume a where
 
-  -- | Gets the value's currently set 'Volume'.
+  -- | Gets the value's currently set 'Volume'. If the value is a 'Channel' and
+  -- 'AllChannels' is used, gets the /average/ 'Volume' of all 'Channel's.
   getVolume :: MonadIO m => a -> m Volume
 
   -- | Sets a value's 'Volume'. If the value is a 'Chunk', the volume setting
@@ -284,16 +278,9 @@ class HasVolume a where
   -- into the output. In case of a 'Channel', the volume setting takes effect
   -- during the final mix, along with the 'Chunk' volume. For instance, setting
   -- the 'Volume' of a certain 'Channel' to 64 will halve the volume of all
-  -- 'Chunk's played on that 'Channel'.
+  -- 'Chunk's played on that 'Channel'. If 'AllChannels' is used, sets all
+  -- 'Channel's to the given 'Volume'.
   setVolume :: MonadIO m => Volume -> a -> m ()
-
--- | Sets all 'Channel's to a given 'Volume'.
-setVolumeAll :: MonadIO m => Volume -> m ()
-setVolumeAll = void . SDL.Raw.Mixer.volume (-1) . volumeToCInt
-
--- | Gets the /average/ 'Volume' of all 'Channel's.
-getVolumeAll :: MonadIO m => m Volume
-getVolumeAll = fmap fromIntegral $ SDL.Raw.Mixer.volume (-1) (-1)
 
 -- | Returns the names of all chunk decoders currently available. These depend
 -- on the availability of shared libraries for each of the formats. The list
@@ -330,8 +317,8 @@ newtype Channel = Channel CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
 
 instance Show Channel where
   show = \case
-    AnyChannel -> "AnyChannel"
-    Channel c  -> "Channel " ++ show c
+    AllChannels -> "AllChannels"
+    Channel c   -> "Channel " ++ show c
 
 -- | Prepares a given number of 'Channel's for use. There are 8 such 'Channel's
 -- already prepared for use after 'openAudio' is called. You may call this
@@ -346,9 +333,9 @@ setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
--- | Use this value when you wish to perform an operation on /any/ 'Channel'.
+-- | Use this value when you wish to perform an operation on /all/ 'Channel's.
 -- For more information, see each of the functions accepting a 'Channel'.
-pattern AnyChannel = (-1) :: Channel
+pattern AllChannels = (-1) :: Channel
 
 instance HasVolume Channel where
   getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
@@ -356,12 +343,11 @@ instance HasVolume Channel where
 
 -- | Play a 'Chunk' once, using the first available 'Channel'.
 play :: MonadIO m => Chunk -> m ()
-play = void . playOn AnyChannel Once
+play = void . playOn (-1) Once
 
--- | Same as 'play', but keeps playing the 'Chunk' forever. Same as 'playOn'
--- 'AnyChannel' 'Forever'.
+-- | Same as 'play', but keeps playing the 'Chunk' forever.
 playForever :: MonadIO m => Chunk -> m ()
-playForever = void . playOn AnyChannel Forever
+playForever = void . playOn (-1) Forever
 
 -- | How many times should a certain 'Chunk' be played?
 newtype Times = Times CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
@@ -372,9 +358,9 @@ pattern Once = 1 :: Times
 -- | A shorthand for looping a 'Chunk' forever.
 pattern Forever = 0 :: Times
 
--- | Same as 'play', but plays the 'Chunk' using a specific 'Channel' a
--- specific number of 'Times'. If 'AnyChannel' is used, then plays the 'Chunk'
--- using the first available 'Channel'. Returns the 'Channel' which was used.
+-- | Same as 'play', but plays the 'Chunk' using a given 'Channel' a certain
+-- number of 'Times'. If 'AllChannels' is used, then plays the 'Chunk' using
+-- the first available 'Channel' instead. Returns the 'Channel' which was used.
 playOn :: MonadIO m => Channel -> Times -> Chunk -> m Channel
 playOn = playLimit NoLimit
 
@@ -395,8 +381,8 @@ playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
     fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) (fromIntegral l)
 
--- | Returns whether the given 'Channel' is playing or not. If 'AnyChannel' is
--- used, this returns whether /any/ channel is currently playing.
+-- | Returns whether the given 'Channel' is playing or not. If 'AllChannels' is
+-- used, this returns whether /any/ of the channels is currently playing.
 playing :: MonadIO m => Channel -> m Bool
 playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
 
@@ -409,10 +395,10 @@ playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
 -- 'Milliseconds'. The 'Chunk' may end playing before the fade-in is complete,
 -- if it doesn't last as long as the given fade-in time.
 fadeIn :: MonadIO m => Milliseconds -> Chunk -> m ()
-fadeIn ms  = void . fadeInOn AnyChannel Once ms
+fadeIn ms  = void . fadeInOn AllChannels Once ms
 
 -- | Same as 'fadeIn', but allows you to specify the 'Channel' to play on and
--- how many 'Times' to play it, similar to 'playOn'. If 'AnyChannel' is used,
+-- how many 'Times' to play it, similar to 'playOn'. If 'AllChannels' is used,
 -- will play the 'Chunk' on the first available 'Channel'. Returns the
 -- 'Channel' that was used.
 fadeInOn :: MonadIO m => Channel -> Times -> Milliseconds -> Chunk -> m Channel
@@ -430,54 +416,32 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
       SDL.Raw.Mixer.fadeInChannelTimed
         c p (t - 1) (fromIntegral ms) (fromIntegral l)
 
--- | Gradually fade out given playing 'Channel' during the next 'Milliseconds',
--- even if it is 'pause'd. If 'AnyChannel' is used, fades out the first
--- 'Channel'.
+-- | Gradually fade out a given playing 'Channel' during the next
+-- 'Milliseconds', even if it is 'pause'd. If 'AllChannels' is used, fades out
+-- all the playing 'Channel's instead.
 fadeOut :: MonadIO m => Milliseconds -> Channel -> m ()
-fadeOut ms (Channel c) =
-  void $ SDL.Raw.Mixer.fadeOutChannel (max 0 c) $ fromIntegral ms
+fadeOut ms (Channel c) = void $ SDL.Raw.Mixer.fadeOutChannel c $ fromIntegral ms
 
--- | Same as 'fadeOut', but fades out all currently playing 'Channels' instead,
--- even if they are 'pause'd.
-fadeOutAll :: MonadIO m => Milliseconds -> m ()
-fadeOutAll = void . SDL.Raw.Mixer.fadeOutChannel (-1) . fromIntegral
-
--- | Pauses the given 'Channel', if it is actively playing. It may still be
--- 'halt'ed. If 'AnyChannel' is used, will pause the first 'Channel'.
+-- | Pauses the given 'Channel', if it is actively playing. If 'AllChannels' is
+-- used, will pause all actively playing 'Channel's instead. Note that 'pause'd
+-- 'Channel's may still be 'halt'ed.
 pause :: MonadIO m => Channel -> m ()
-pause (Channel c) = SDL.Raw.Mixer.pause $ max 0 c
+pause (Channel c) = SDL.Raw.Mixer.pause c
 
--- | Pauses all actively playing 'Channel's. They may still be 'halt'ed.
-pauseAll :: MonadIO m => m ()
-pauseAll = SDL.Raw.Mixer.pause (-1)
-
--- | Resumes playing a given 'Channel'. If 'AnyChannel' is used, will resume
--- the first 'Channel'.
+-- | Resumes playing a 'Channel', or all 'Channel's if 'AllChannels' is used.
 resume :: MonadIO m => Channel -> m ()
-resume (Channel c) = SDL.Raw.Mixer.resume $ max 0 c
+resume (Channel c) = SDL.Raw.Mixer.resume c
 
--- | Resumes all paused 'Channel's.
-resumeAll :: MonadIO m => m ()
-resumeAll = SDL.Raw.Mixer.resume (-1)
-
--- | Halts playback on a given 'Channel'. If 'AnyChannel' is used, will halt
--- the first 'Channel'.
+-- | Halts playback on a 'Channel', or all 'Channel's if 'AllChannels' is used.
 halt :: MonadIO m => Channel -> m ()
-halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel $ max 0 c
-
--- | Halts all 'Channel's.
-haltAll :: MonadIO m => m ()
-haltAll = void $ SDL.Raw.Mixer.haltChannel (-1)
+halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
 
 -- | Same as 'halt', but only does so after a certain number of 'Milliseconds'.
--- If 'AnyChannel' is used, it will halt the first 'Channel'.
+-- If 'AllChannels' is used, it will halt all the 'Channel's after the given
+-- time instead.
 haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
 haltAfter ms (Channel c) =
-  void . SDL.Raw.Mixer.expireChannel (max 0 c) $ fromIntegral ms
-
--- | Same as 'haltAfter', but does so to all 'Channel's.
-haltAllAfter :: MonadIO m => Milliseconds -> m ()
-haltAllAfter = void . SDL.Raw.Mixer.expireChannel (-1) . fromIntegral
+  void . SDL.Raw.Mixer.expireChannel c $ fromIntegral ms
 
 -- Channels
 -- TODO: channelFinished
