@@ -580,9 +580,6 @@ wordToFading = \case
 fading :: MonadIO m => Channel -> m Fading
 fading (Channel c) = wordToFading <$> SDL.Raw.Mixer.fadingChannel c
 
--- Channels
--- TODO: channelFinished
-
 -- Channel groups
 -- TODO: reserveChannels
 -- TODO: groupChannel
