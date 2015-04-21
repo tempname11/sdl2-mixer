@@ -54,6 +54,7 @@ module SDL.Raw.Mixer
   , getNumChunkDecoders
   , getChunkDecoder
   , Chunk(..)
+  , loadWAV
   , loadWAV_RW
   , quickLoadWAV
   , quickLoadRaw
@@ -65,7 +66,9 @@ module SDL.Raw.Mixer
   , allocateChannels
   , Channel
   , volume
+  , playChannel
   , playChannelTimed
+  , fadeInChannel
   , fadeInChannelTimed
   , pause
   , resume
@@ -246,6 +249,9 @@ instance Storable Chunk where
     (#poke Mix_Chunk, alen)      ptr chunkAlen
     (#poke Mix_Chunk, volume)    ptr chunkVolume
 
+liftF "loadWAV" "Mix_LoadWAV_helper"
+  [t|CString -> IO (Ptr Chunk)|]
+
 liftF "loadWAV_RW" "Mix_LoadWAV_RW"
   [t|Ptr RWops -> CInt -> IO (Ptr Chunk)|]
 
@@ -273,7 +279,13 @@ type Channel = CInt
 liftF "volume" "Mix_Volume"
   [t|Channel -> CInt -> IO CInt|]
 
+liftF "playChannel" "Mix_PlayChannel_helper"
+  [t|Channel -> Ptr Chunk -> CInt -> IO CInt|]
+
 liftF "playChannelTimed" "Mix_PlayChannelTimed"
+  [t|Channel -> Ptr Chunk -> CInt -> CInt -> IO CInt|]
+
+liftF "fadeInChannel" "Mix_FadeInChannel_helper"
   [t|Channel -> Ptr Chunk -> CInt -> CInt -> IO CInt|]
 
 liftF "fadeInChannelTimed" "Mix_FadeInChannelTimed"
