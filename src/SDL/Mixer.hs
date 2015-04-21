@@ -63,6 +63,8 @@ module SDL.Mixer
   , fadeIn
   , fadeInOn
   , fadeInLimit
+  , fadeOut
+  , fadeOutAll
   , pause
   , pauseAll
   , resume
@@ -428,6 +430,18 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
       SDL.Raw.Mixer.fadeInChannelTimed
         c p (t - 1) (fromIntegral ms) (fromIntegral l)
 
+-- | Gradually fade out given playing 'Channel' during the next 'Milliseconds',
+-- even if it is 'pause'd. If 'AnyChannel' is used, fades out the first
+-- 'Channel'.
+fadeOut :: MonadIO m => Milliseconds -> Channel -> m ()
+fadeOut ms (Channel c) =
+  void $ SDL.Raw.Mixer.fadeOutChannel (max 0 c) $ fromIntegral ms
+
+-- | Same as 'fadeOut', but fades out all currently playing 'Channels' instead,
+-- even if they are 'pause'd.
+fadeOutAll :: MonadIO m => Milliseconds -> m ()
+fadeOutAll = void . SDL.Raw.Mixer.fadeOutChannel (-1) . fromIntegral
+
 -- | Pauses the given 'Channel', if it is actively playing. It may still be
 -- 'halt'ed. If 'AnyChannel' is used, will pause the first 'Channel'.
 pause :: MonadIO m => Channel -> m ()
@@ -466,10 +480,6 @@ haltAllAfter :: MonadIO m => Milliseconds -> m ()
 haltAllAfter = void . SDL.Raw.Mixer.expireChannel (-1) . fromIntegral
 
 -- Channels
--- TODO: resume
--- TODO: haltChannel
--- TODO: expireChannel
--- TODO: fadeOutChannel
 -- TODO: channelFinished
 -- TODO: paused
 -- TODO: fadingChannel
