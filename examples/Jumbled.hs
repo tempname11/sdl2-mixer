@@ -30,7 +30,7 @@ runExample paths = do
   Mix.setChannels $ length paths
   chunks <- mapM Mix.load paths
   mapM_ Mix.play chunks
-  delayWhile $ Mix.playing Mix.AnyChannel
+  delayWhile $ Mix.playing Mix.AllChannels
   Mix.setChannels 0
   mapM_ Mix.free chunks
 

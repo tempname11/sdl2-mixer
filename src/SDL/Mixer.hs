@@ -67,7 +67,7 @@ module SDL.Mixer
   , pause
   , resume
   , halt
-  , haltAll
+  , haltAfter
 
   -- * Music
   , musicDecoders

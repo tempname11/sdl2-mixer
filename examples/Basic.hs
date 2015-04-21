@@ -30,7 +30,7 @@ main = do
   Mix.play sound
 
   -- wait until finished
-  whileTrueM $ Mix.playing Mix.AnyChannel
+  whileTrueM $ Mix.playing Mix.AllChannels
 
  -- free resources
   Mix.free sound
