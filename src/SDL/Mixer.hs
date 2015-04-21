@@ -43,9 +43,9 @@ module SDL.Mixer
 
   -- * Channels
   , Channel
+  , pattern AllChannels
   , setChannels
   , getChannels
-  , pattern AllChannels
 
   -- * Playing Chunks
   , play
@@ -58,8 +58,6 @@ module SDL.Mixer
   , Limit
   , pattern NoLimit
   , playLimit
-  , playing
-  , playingCount
   , fadeIn
   , fadeInOn
   , fadeInLimit
@@ -68,6 +66,10 @@ module SDL.Mixer
   , resume
   , halt
   , haltAfter
+  , playing
+  , playingCount
+  , paused
+  , pausedCount
 
   -- * Music
   , musicDecoders
@@ -427,17 +429,6 @@ playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
     fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) (fromIntegral l)
 
--- | Returns whether the given 'Channel' is playing or not.
---
--- If 'AllChannels' is used, this returns whether /any/ of the channels is
--- currently playing.
-playing :: MonadIO m => Channel -> m Bool
-playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
-
--- | Returns how many 'Channel's are currently playing.
-playingCount :: MonadIO m => m Int
-playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
-
 -- | Same as 'play', but fades in the 'Chunk' by making the 'Channel' 'Volume'
 -- start at 0 and rise to a full 128 over the course of a given number of
 -- 'Milliseconds'.
@@ -501,6 +492,28 @@ halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
 haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
 haltAfter ms (Channel c) =
   void . SDL.Raw.Mixer.expireChannel c $ fromIntegral ms
+
+-- | Returns whether the given 'Channel' is playing or not.
+--
+-- If 'AllChannels' is used, this returns whether /any/ of the channels is
+-- currently playing.
+playing :: MonadIO m => Channel -> m Bool
+playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
+
+-- | Returns how many 'Channel's are currently playing.
+playingCount :: MonadIO m => m Int
+playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
+
+-- | Returns whether the given 'Channel' is paused or not.
+--
+-- If 'AllChannels' is used, this returns whether /any/ of the channels is
+-- currently paused.
+paused :: MonadIO m => Channel -> m Bool
+paused (Channel c) = (> 0) <$> SDL.Raw.Mixer.paused c
+
+-- | Returns how many 'Channel's are currently paused.
+pausedCount :: MonadIO m => m Int
+pausedCount = fromIntegral <$> SDL.Raw.Mixer.paused (-1)
 
 -- Channels
 -- TODO: channelFinished
