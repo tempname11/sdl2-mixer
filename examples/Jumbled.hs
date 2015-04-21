@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Monad      (when)
 import Data.Default.Class (def)
 import System.Environment (getArgs)
 import System.Exit        (exitFailure)
@@ -29,6 +30,13 @@ runExample paths = do
   SDL.Mixer.setChannels $ length paths
   chunks <- mapM SDL.Mixer.load paths
   mapM_ (SDL.Mixer.play SDL.Mixer.AnyChannel SDL.Mixer.Once) chunks
-  SDL.delay 2000
+  delayWhile $ SDL.Mixer.playing SDL.Mixer.AnyChannel
   SDL.Mixer.setChannels 0
   mapM_ SDL.Mixer.free chunks
+
+delayWhile :: IO Bool -> IO ()
+delayWhile check = loop'
+  where
+    loop' = do
+      still <- check
+      when still $ SDL.delay 100 >> delayWhile check

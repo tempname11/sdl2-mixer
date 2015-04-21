@@ -53,6 +53,7 @@ module SDL.Mixer
   , play
   , Limit
   , playLimit
+  , playing
 
   -- * Music
   , musicDecoders
@@ -322,8 +323,7 @@ getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
 -- | Use this value when you wish to perform an operation on /any/ 'Channel'.
--- Usually this means the first available 'Channel' will be chosen, assuming
--- one exists.
+-- For more information, see each of the functions accepting a 'Channel'.
 pattern AnyChannel = (-1) :: Channel
 
 instance HasVolume Channel where
@@ -340,8 +340,9 @@ pattern Once = 1 :: Times
 pattern Forever = 0 :: Times
 
 {-# INLINE play #-}
--- | Play a 'Chunk', playing it a certain number of 'Times'. Returns the
--- 'Channel' the 'Chunk' is played on.
+-- | Play a 'Chunk', playing it a certain number of 'Times'. If 'AnyChannel' is
+-- used, this will play the 'Chunk' on the first available 'Channel'. Returns
+-- the 'Channel' the 'Chunk' is played on.
 play :: MonadIO m => Channel -> Times -> Chunk -> m Channel
 play = playLimit (-1)
 
@@ -355,6 +356,11 @@ playLimit :: MonadIO m => Limit -> Channel -> Times -> Chunk -> m Channel
 playLimit (Limit l) (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
     fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) l
+
+-- | Returns whether the given 'Channel' is playing or not. If 'AnyChannel' is
+-- used, this returns whether /any/ channel is currently playing.
+playing :: MonadIO m => Channel -> m Bool
+playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
 
 -- Channels
 -- TODO: fadeInChannel
@@ -441,60 +447,3 @@ instance Loadable Music where
 -- TODO: setSoundFonts
 -- TODO: getSoundFonts
 -- TODO: eachSoundFont
-
--- -- | An audio chunk.
--- newtype Chunk = Chunk (Ptr SDL.Raw.Mixer.Chunk)
-
--- load :: (Functor m, MonadIO m) => FilePath -> m Chunk
--- load filePath =
---   fmap Chunk $
---     throwIfNull "SDL.Mixer.load" "Mix_LoadWAV" $
---       liftIO $ withCString filePath $ \cstr ->
---         Raw.loadWav cstr
-
--- newtype Channel = Channel CInt
-
--- data ChannelChoice
---   = AnyChannel
---   | SpecificChannel Channel
-
--- data Loops
---   = Infinite
---   | Once
---   | Repeat Int
-
--- play :: (Functor m, MonadIO m) => Chunk -> m Channel
--- play chunk = playChannel AnyChannel chunk Once
-
--- playChannel :: (Functor m, MonadIO m) => ChannelChoice -> Chunk -> Loops -> m Channel
--- playChannel channel chunk loops =
---   fmap Channel $
---     throwIfNeg "SDL.Mixer.playChannel" "Mix_PlayChannel" $
---       SDL.Raw.Mixer.playChannel channel' chunk' loops'
---   where
---     Chunk chunk' = chunk
---     channel' = case channel of
---                     AnyChannel                  -> -1
---                     SpecificChannel (Channel n) -> n
---     loops' = case loops of
---                   Infinite             -> (-1)
---                   Once                 -> 0
---                   Repeat n | n > 1     -> fromIntegral (n - 1)
---                            | otherwise -> error "Invalid Repeat value"
-
--- playing :: (Functor m, MonadIO m) => Channel -> m Bool
--- playing channel =
---   fmap (> 0) $
---     SDL.Raw.Mixer.playing channel'
---   where
---     Channel channel' = channel
-
--- playingCount :: (Functor m, MonadIO m) => m Int
--- playingCount =
---   fmap fromIntegral $
---     SDL.Raw.Mixer.playing (-1)
-
--- freeChunk :: MonadIO m => Chunk -> m ()
--- freeChunk chunk = SDL.Raw.Mixer.freeChunk chunk'
---   where
---     Chunk chunk' = chunk
