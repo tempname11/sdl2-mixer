@@ -47,7 +47,11 @@ module SDL.Mixer
   , setChannels
   , getChannels
 
-  -- * Playing Chunks
+  -- * Music
+  , musicDecoders
+  , Music(..)
+
+  -- * Playing
   , play
   , playForever
   , Times
@@ -58,10 +62,8 @@ module SDL.Mixer
   , Limit
   , pattern NoLimit
   , playLimit
-  , fadeIn
-  , fadeInOn
-  , fadeInLimit
-  , fadeOut
+
+  -- * Pausing, resuming, halting
   , pause
   , resume
   , halt
@@ -71,9 +73,12 @@ module SDL.Mixer
   , paused
   , pausedCount
 
-  -- * Music
-  , musicDecoders
-  , Music(..)
+  -- * Fading in and out
+  , fadeIn
+  , fadeInOn
+  , fadeInLimit
+  , fadeOut
+  , fading
 
   -- * Setting the volume
   , Volume
@@ -515,10 +520,26 @@ paused (Channel c) = (> 0) <$> SDL.Raw.Mixer.paused c
 pausedCount :: MonadIO m => m Int
 pausedCount = fromIntegral <$> SDL.Raw.Mixer.paused (-1)
 
+-- | Describes whether a 'Channel' is fading in, out, or not at all.
+data Fading = NoFading | FadingIn | FadingOut
+  deriving (Eq, Ord, Show, Read)
+
+wordToFading :: SDL.Raw.Mixer.Fading -> Fading
+wordToFading = \case
+  SDL.Raw.Mixer.NO_FADING  -> NoFading
+  SDL.Raw.Mixer.FADING_IN  -> FadingIn
+  SDL.Raw.Mixer.FADING_OUT -> FadingOut
+  _ -> error "SDL.Mixer.wordToFading: unknown Fading value."
+
+-- | Returns a 'Channel''s 'Fading' status.
+--
+-- Note that using 'AllChannels' here is not valid, and will simply return the
+-- 'Fading' status of the first 'Channel' instead.
+fading :: MonadIO m => Channel -> m Fading
+fading (Channel c) = wordToFading <$> SDL.Raw.Mixer.fadingChannel c
+
 -- Channels
 -- TODO: channelFinished
--- TODO: paused
--- TODO: fadingChannel
 -- TODO: getChunk
 
 -- Channel groups
