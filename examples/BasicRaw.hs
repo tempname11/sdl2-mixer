@@ -12,9 +12,9 @@ main = do
   fileName <- do
     args <- getArgs
     case args of
-      [arg] -> return arg
+      (arg:_) -> return arg
       _ -> do
-        putStrLn "Usage: <cmd> <sound filename>"
+        putStrLn "Usage: cabal run sdl2-mixer-raw <sound filename>"
         exitWith $ ExitFailure 1
 
   -- initialize libraries
@@ -31,7 +31,7 @@ main = do
   assert $ result == 0
 
   -- open file
-  sound <- withCString fileName $ \cstr -> Mix.loadWav cstr
+  sound <- withCString fileName $ \cstr -> Mix.loadWAV cstr
   assert $ sound /= nullPtr
 
   -- play file
