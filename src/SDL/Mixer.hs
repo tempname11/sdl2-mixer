@@ -27,6 +27,7 @@ module SDL.Mixer
   -- * Configuring audio
   , openAudio
   , Audio(..)
+  , defaultAudio
   , ChunkSize
   , Format(..)
   , Output(..)
@@ -152,6 +153,10 @@ instance Default Audio where
               , audioFormat    = wordToFormat SDL.Raw.Mixer.DEFAULT_FORMAT
               , audioOutput    = cIntToOutput SDL.Raw.Mixer.DEFAULT_CHANNELS
               }
+
+-- | A default 'Audio' configuration. Same as 'Data.Default.Class.def'.
+defaultAudio :: Audio
+defaultAudio = def
 
 -- | The size of each mixed sample. The smaller this is, the more your hooks
 -- will be called. If this is made too small on a slow system, the sounds may
