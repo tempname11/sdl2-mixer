@@ -46,6 +46,7 @@ module SDL.Mixer
   , pattern AllChannels
   , setChannels
   , getChannels
+  , playedLast
 
   -- * Music
   , musicDecoders
@@ -78,6 +79,7 @@ module SDL.Mixer
   , fadeInOn
   , fadeInLimit
   , fadeOut
+  , Fading
   , fading
 
   -- * Setting the volume
@@ -96,7 +98,7 @@ import Data.Foldable          (foldl)
 import Foreign.C.String       (peekCString)
 import Foreign.C.Types        (CInt)
 import Foreign.Marshal.Alloc  (alloca)
-import Foreign.Ptr            (Ptr, castPtr)
+import Foreign.Ptr            (Ptr, castPtr, nullPtr)
 import Foreign.Storable       (Storable(..))
 import Prelude         hiding (foldl, readFile)
 import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
@@ -378,6 +380,16 @@ setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
 
+-- | Gets the most recent 'Chunk' played on a 'Channel', if any.
+--
+-- Using 'AllChannels' is not valid here, and will return 'Nothing'.
+--
+-- Note that the returned 'Chunk' might be invalid if it was already 'free'd.
+playedLast :: MonadIO m => Channel -> m (Maybe Chunk)
+playedLast (Channel c) = do
+  p <- SDL.Raw.Mixer.getChunk c
+  return $ if p == nullPtr then Nothing else Just (Chunk p)
+
 -- | Use this value when you wish to perform an operation on /all/ 'Channel's.
 --
 -- For more information, see each of the functions accepting a 'Channel'.
@@ -531,7 +543,7 @@ wordToFading = \case
   SDL.Raw.Mixer.FADING_OUT -> FadingOut
   _ -> error "SDL.Mixer.wordToFading: unknown Fading value."
 
--- | Returns a 'Channel''s 'Fading' status.
+-- | Returns a `Channel`'s 'Fading' status.
 --
 -- Note that using 'AllChannels' here is not valid, and will simply return the
 -- 'Fading' status of the first 'Channel' instead.
@@ -540,7 +552,6 @@ fading (Channel c) = wordToFading <$> SDL.Raw.Mixer.fadingChannel c
 
 -- Channels
 -- TODO: channelFinished
--- TODO: getChunk
 
 -- Channel groups
 -- TODO: reserveChannels
