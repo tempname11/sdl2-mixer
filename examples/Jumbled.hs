@@ -29,7 +29,7 @@ runExample :: [FilePath] -> IO ()
 runExample paths = do
   Mix.setChannels $ length paths
   chunks <- mapM Mix.load paths
-  mapM_ (Mix.playAt Mix.AnyChannel Mix.Once) chunks
+  mapM_ Mix.play chunks
   delayWhile $ Mix.playing Mix.AnyChannel
   Mix.setChannels 0
   mapM_ Mix.free chunks

@@ -52,7 +52,8 @@ module SDL.Mixer
   , Times
   , pattern Once
   , pattern Forever
-  , playAt
+  , playOn
+  , Milliseconds
   , Limit
   , playLimit
   , playing
@@ -340,7 +341,7 @@ instance HasVolume Channel where
 
 -- | Play a 'Chunk' once, using the first available 'Channel'.
 play :: MonadIO m => Chunk -> m ()
-play = void . playLimit (-1) AnyChannel Once
+play = void . playOn AnyChannel Once
 
 -- | How many times should a certain 'Chunk' be played?
 newtype Times = Times CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
@@ -354,19 +355,22 @@ pattern Forever = 0 :: Times
 -- | Same as 'play', but plays the 'Chunk' using a specific 'Channel' a
 -- specific number of 'Times'. If 'AnyChannel' is used, then plays the 'Chunk'
 -- using the first available 'Channel'. Returns the 'Channel' which was used.
-playAt :: MonadIO m => Channel -> Times -> Chunk -> m Channel
-playAt = playLimit (-1)
+playOn :: MonadIO m => Channel -> Times -> Chunk -> m Channel
+playOn = playLimit (-1)
 
--- | An upper limit, in milliseconds, on the playing of a certain 'Chunk'.
-newtype Limit = Limit CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
+-- | A time in milliseconds.
+type Milliseconds = Int
 
--- | Same as 'play', but imposes an upper 'Limit' in milliseconds to how long
+-- | An upper limit of time, in milliseconds.
+type Limit = Milliseconds
+
+-- | Same as 'playOn', but imposes an upper limit in 'Milliseconds' to how long
 -- the 'Chunk' can play. The playing may still stop before the limit is
 -- reached.
 playLimit :: MonadIO m => Limit -> Channel -> Times -> Chunk -> m Channel
-playLimit (Limit l) (Channel c) (Times t) (Chunk p) =
+playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
-    fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) l
+    fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) (fromIntegral l)
 
 -- | Returns whether the given 'Channel' is playing or not. If 'AnyChannel' is
 -- used, this returns whether /any/ channel is currently playing.
