@@ -108,6 +108,8 @@ module SDL.Mixer
   , fadeInMusicAtMOD
   , getMusicVolume
   , setMusicVolume
+  , setMusicPosition
+  , setMusicPositionMOD
 
   ) where
 
@@ -816,7 +818,26 @@ fadeInMusic ms times (Music p) =
 -- | A position in milliseconds within a piece of 'Music'.
 type Position = Milliseconds
 
+-- | Set the 'Position' for currently playing 'Music'.
+--
+-- Note: this only works for @OGG@ and @MP3@ 'Music'.
+setMusicPosition :: MonadIO m => Position -> m ()
+setMusicPosition at = do
+  rewindMusic -- Due to weird behaviour for MP3s...
+  throwIfNeg_ "SDL.Mixer.setMusicPosition" "Mix_SetMusicPosition" $
+    SDL.Raw.Mixer.setMusicPosition $ realToFrac at / 1000.0
+
+-- | Similar to 'setMusicPosition', but works only with @MOD@ 'Music'.
+--
+-- Pass in the pattern number.
+setMusicPositionMOD :: MonadIO m => Int -> m ()
+setMusicPositionMOD n = do
+  throwIfNeg_ "SDL.Mixer.setMusicPositionMOD" "Mix_SetMusicPosition" $
+    SDL.Raw.Mixer.setMusicPosition $ realToFrac n
+
 -- | Same as 'fadeInMusic', but with a custom starting `Music`'s 'Position'.
+--
+-- Note that this only works on 'Music' that 'setMusicPosition' works on.
 fadeInMusicAt :: MonadIO m => Position -> Milliseconds -> Times -> Music -> m ()
 fadeInMusicAt at ms times (Music p) =
   throwIfNeg_ "SDL.Mixer.fadeInMusicAt" "Mix_FadeInMusicPos" $
