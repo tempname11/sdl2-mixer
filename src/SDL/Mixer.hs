@@ -41,14 +41,22 @@ module SDL.Mixer
   , chunkDecoders
   , Chunk(..)
 
-  -- * Channels
+  -- * Channels and groups
   , Channel
   , pattern AllChannels
   , setChannels
   , getChannels
-  , reserveChannels
   , whenChannelFinished
   , playedLast
+  , reserveChannels
+  , Group
+  , pattern DefaultGroup
+  , group
+  , groupSpan
+  , groupCount
+  , getAvailable
+  , getOldest
+  , getNewest
 
   -- * Music
   , musicDecoders
@@ -71,6 +79,7 @@ module SDL.Mixer
   , resume
   , halt
   , haltAfter
+  , haltGroup
   , playing
   , playingCount
   , paused
@@ -81,6 +90,7 @@ module SDL.Mixer
   , fadeInOn
   , fadeInLimit
   , fadeOut
+  , fadeOutGroup
   , Fading
   , fading
 
@@ -499,6 +509,14 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
 fadeOut :: MonadIO m => Milliseconds -> Channel -> m ()
 fadeOut ms (Channel c) = void $ SDL.Raw.Mixer.fadeOutChannel c $ fromIntegral ms
 
+-- | Same as 'fadeOut', but fades out an entire 'Group' instead.
+--
+-- Using 'DefaultGroup' here is the same as calling 'fadeOut' with
+-- 'AllChannels'.
+fadeOutGroup :: MonadIO m => Milliseconds -> Group -> m ()
+fadeOutGroup ms (Group g) =
+  void $ SDL.Raw.Mixer.fadeOutGroup g $ fromIntegral ms
+
 -- | Pauses the given 'Channel', if it is actively playing.
 --
 -- If 'AllChannels' is used, will pause all actively playing 'Channel's
@@ -523,6 +541,15 @@ halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
 haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
 haltAfter ms (Channel c) =
   void . SDL.Raw.Mixer.expireChannel c $ fromIntegral ms
+
+-- | Same as 'halt', but halts an entire 'Group' instead.
+--
+-- Note that using 'DefaultGroup' here is the same as calling 'halt'
+-- 'AllChannels'.
+haltGroup :: MonadIO m => Group -> m ()
+haltGroup = \case
+  DefaultGroup -> halt AllChannels
+  Group g      -> void $ SDL.Raw.Mixer.haltGroup g
 
 -- Quackery of the highest order! We keep track of a pointer we gave SDL_mixer,
 -- so we can free it at a later time. May the gods have mercy...
@@ -591,16 +618,87 @@ wordToFading = \case
 fading :: MonadIO m => Channel -> m Fading
 fading (Channel c) = wordToFading <$> SDL.Raw.Mixer.fadingChannel c
 
--- Channel groups
--- TODO: reserveChannels
--- TODO: groupChannel
--- TODO: groupChannels
--- TODO: groupCount
--- TODO: groupAvailable
--- TODO: groupOldest
--- TODO: groupNewest
--- TODO: fadeOutGroup
--- TODO: haltGroup
+-- | A group of 'Channel's.
+--
+-- Grouping 'Channel's together allows you to perform some operations on all of
+-- them at once.
+--
+-- By default, all 'Channel's are members of the 'DefaultGroup'.
+newtype Group = Group CInt deriving (Eq, Ord, Enum, Integral, Real, Num)
+
+-- | The default 'Group' all 'Channel's are in the moment they are created.
+pattern DefaultGroup = (-1) :: Group
+
+-- | Assigns a given 'Channel' to a certain 'Group'.
+--
+-- If 'DefaultGroup' is used, assigns the 'Channel' the the default starting
+-- 'Group' (essentially /ungrouping/ them).
+--
+-- If 'AllChannels' is used, assigns all 'Channel's to the given 'Group'.
+--
+-- Returns whether the 'Channel' was successfully grouped or not. Failure is
+-- poosible if the 'Channel' does not exist, for instance.
+group :: MonadIO m => Group -> Channel -> m Bool
+group wrapped@(Group g) channel =
+  case channel of
+    AllChannels -> do
+      total <- getChannels
+      if total > 0 then
+        (> 0) <$> groupSpan wrapped 0 (Channel $ fromIntegral $ total - 1)
+      else
+        return True -- No channels available -- still a success probably.
+    Channel c ->
+      (== 1) <$> SDL.Raw.Mixer.groupChannel c g
+
+-- | Same as 'groupChannel', but groups all 'Channel's between the first and
+-- last given, inclusive.
+--
+-- If 'DefaultGroup' is used, assigns the entire 'Channel' span to the default
+-- starting 'Group' (essentially /ungrouping/ them).
+--
+-- Using 'AllChannels' is invalid.
+--
+-- Returns the number of 'Channel's successfully grouped. This number may be
+-- less than the number of 'Channel's given, for instance if some of them do
+-- not exist.
+groupSpan :: MonadIO m => Group -> Channel -> Channel -> m Int
+groupSpan (Group g) (Channel from) (Channel to) =
+  fromIntegral <$> SDL.Raw.Mixer.groupChannels from to g
+
+-- | Returns the number of 'Channels' within a 'Group'.
+--
+-- If 'DefaultGroup' is used, will return the number of all 'Channel's, since
+-- all of them are within the default 'Group'.
+groupCount :: MonadIO m => Group -> m Int
+groupCount (Group g) = fromIntegral <$> SDL.Raw.Mixer.groupCount g
+
+-- | Gets the first inactive (not playing) 'Channel' within a given 'Group',
+-- if any.
+--
+-- Using 'DefaultGroup' will give you the first inactive 'Channel' out of all
+-- that exist.
+getAvailable :: MonadIO m => Group -> m (Maybe Channel)
+getAvailable (Group g) = do
+  found <- SDL.Raw.Mixer.groupAvailable g
+  return $ if found >= 0 then Just $ fromIntegral found else Nothing
+
+-- | Gets the oldest actively playing 'Channel' within a given 'Group'.
+--
+-- Returns 'Nothing' when the 'Group' is empty or no 'Channel's within it are
+-- playing.
+getOldest :: MonadIO m => Group -> m (Maybe Channel)
+getOldest (Group g) = do
+  found <- SDL.Raw.Mixer.groupOldest g
+  return $ if found >= 0 then Just $ fromIntegral found else Nothing
+
+-- | Gets the newest actively playing 'Channel' within a given 'Group'.
+--
+-- Returns 'Nothing' when the 'Group' is empty or no 'Channel's within it are
+-- playing.
+getNewest :: MonadIO m => Group -> m (Maybe Channel)
+getNewest (Group g) = do
+  found <- SDL.Raw.Mixer.groupNewer g
+  return $ if found >= 0 then Just $ fromIntegral found else Nothing
 
 -- | Returns the names of all music decoders currently available.
 --
