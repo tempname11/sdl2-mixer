@@ -98,7 +98,10 @@ module SDL.Mixer
   , musicDecoders
   , Music(..)
   , playMusic
+  , pauseMusic
+  , resumeMusic
   , playingMusic
+  , Position
   , fadeInMusic
   , fadeInMusicAt
   , getMusicVolume
@@ -766,6 +769,20 @@ playMusic times (Music p) =
       case times of
         Forever -> (-1)
         Times t -> max 1 t -- Interpretation differs from normal play? :/
+
+-- | Pauses 'Music' playback, if it is actively playing.
+--
+-- You may still 'haltMusic' paused 'Music'.
+pauseMusic :: MonadIO m => m ()
+pauseMusic = SDL.Raw.Mixer.pauseMusic
+
+-- | Resumes 'Music' playback.
+--
+-- This works on both paused and halted 'Music'.
+--
+-- If 'Music' is currently actively playing, this has no effect.
+resumeMusic :: MonadIO m => m ()
+resumeMusic = SDL.Raw.Mixer.resumeMusic
 
 -- | Returns whether a 'Music' is currently playing or not.
 --
