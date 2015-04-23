@@ -105,6 +105,7 @@ module SDL.Mixer
   , Position
   , fadeInMusic
   , fadeInMusicAt
+  , fadeInMusicAtMOD
   , getMusicVolume
   , setMusicVolume
 
@@ -803,8 +804,6 @@ rewindMusic = SDL.Raw.Mixer.rewindMusic
 -- certain number of 'Milliseconds'.
 --
 -- The fading only occurs during the first time the 'Music' is played.
---
--- This is the same as calling 'fadeInMusicAt' with a position of 0.
 fadeInMusic :: MonadIO m => Milliseconds -> Times -> Music -> m ()
 fadeInMusic ms times (Music p) =
   throwIfNeg_ "SDL.Mixer.fadeInMusic" "Mix_FadeInMusic" $
@@ -823,6 +822,19 @@ fadeInMusicAt at ms times (Music p) =
   throwIfNeg_ "SDL.Mixer.fadeInMusicAt" "Mix_FadeInMusicPos" $
     SDL.Raw.Mixer.fadeInMusicPos
       p t' (fromIntegral ms) (realToFrac at / 1000.0)
+  where
+    t' = case times of
+      Forever -> (-1)
+      Times t -> max 1 t
+
+-- | Same as 'fadeInMusicAt', but works with @MOD@ 'Music'.
+--
+-- Instead of milliseconds, specify the position with a pattern number.
+fadeInMusicAtMOD :: MonadIO m => Int -> Milliseconds -> Times -> Music -> m ()
+fadeInMusicAtMOD at ms times (Music p) =
+  throwIfNeg_ "SDL.Mixer.fadeInMusicAtMOD" "Mix_FadeInMusicPos" $
+    SDL.Raw.Mixer.fadeInMusicPos
+      p t' (fromIntegral ms) (realToFrac at)
   where
     t' = case times of
       Forever -> (-1)
