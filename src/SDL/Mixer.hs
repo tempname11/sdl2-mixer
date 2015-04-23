@@ -790,7 +790,7 @@ fadeInMusicAt :: MonadIO m => Position -> Milliseconds -> Times -> Music -> m ()
 fadeInMusicAt at ms times (Music p) =
   throwIfNeg_ "SDL.Mixer.fadeInMusicAt" "Mix_FadeInMusicPos" $
     SDL.Raw.Mixer.fadeInMusicPos
-      p t' (fromIntegral ms) (realToFrac at)
+      p t' (fromIntegral ms) (realToFrac at / 1000.0)
   where
     t' = case times of
       Forever -> (-1)
