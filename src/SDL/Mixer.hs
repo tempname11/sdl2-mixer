@@ -100,6 +100,7 @@ module SDL.Mixer
   , playMusic
   , pauseMusic
   , resumeMusic
+  , rewindMusic
   , playingMusic
   , Position
   , fadeInMusic
@@ -789,6 +790,14 @@ resumeMusic = SDL.Raw.Mixer.resumeMusic
 -- Note that this returns 'True' even if the 'Music' is currently paused.
 playingMusic :: MonadIO m => m Bool
 playingMusic = (> 0) <$> SDL.Raw.Mixer.playingMusic
+
+-- | Rewinds the 'Music' to the beginning.
+--
+-- When playing new 'Music', it starts at the beginning by default.
+--
+-- This function only works with @MOD@, @OGG@, @MP3@ and @NATIVEMIDI@ streams.
+rewindMusic :: MonadIO m => m ()
+rewindMusic = SDL.Raw.Mixer.rewindMusic
 
 -- | Plays a given 'Music' a number of 'Times', but fading it in during a
 -- certain number of 'Milliseconds'.
