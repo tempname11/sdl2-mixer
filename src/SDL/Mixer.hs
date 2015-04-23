@@ -483,7 +483,7 @@ playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
     fmap fromIntegral $
       SDL.Raw.Mixer.playChannelTimed
-        (clipChan c) p (t - 1) (fromIntegral l)
+        (clipChan c) p (max (-1) $ t - 1) (fromIntegral l)
 
 -- | Same as 'play', but fades in the 'Chunk' by making the 'Channel' 'Volume'
 -- start at 0 and rise to a full 128 over the course of a given number of
@@ -504,8 +504,8 @@ fadeIn ms  = void . fadeInOn AllChannels Once ms
 fadeInOn :: MonadIO m => Channel -> Times -> Milliseconds -> Chunk -> m Channel
 fadeInOn = fadeInLimit NoLimit
 
--- | Same as 'fadeInOn', but imposes an upper limit in 'Milliseconds' to how
--- long the 'Chunk' can play, similar to 'playLimit'.
+-- | Same as 'fadeInOn', but imposes an upper 'Limit' to how long the 'Chunk'
+-- can play, similar to 'playLimit'.
 --
 -- This is the most generic fade-in function variant.
 fadeInLimit
@@ -515,7 +515,7 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
   throwIfNeg "SDL.Mixer.fadeInLimit" "Mix_FadeInChannelTimed" $
     fromIntegral <$>
       SDL.Raw.Mixer.fadeInChannelTimed
-        (clipChan c) p (t - 1) (fromIntegral ms) (fromIntegral l)
+        (clipChan c) p (max (-1) $ t - 1) (fromIntegral ms) (fromIntegral l)
 
 -- | Gradually fade out a given playing 'Channel' during the next
 -- 'Milliseconds', even if it is 'pause'd.
@@ -765,7 +765,7 @@ playMusic times (Music p) =
     SDL.Raw.Mixer.playMusic p $
       case times of
         Forever -> (-1)
-        Times t -> t -- The interpretation of loops differs from normal play? :/
+        Times t -> max 1 t -- Interpretation differs from normal play? :/
 
 -- | Returns whether a 'Music' is currently playing or not.
 --
@@ -817,7 +817,6 @@ setMusicVolume v = void . SDL.Raw.Mixer.volumeMusic $ volumeToCInt v
 -- TODO: fadeOutMusic
 -- TODO: hookMusicFinished
 -- TODO: getMusicType
--- TODO: playingMusic
 -- TODO: pausedMusic
 -- TODO: fadingMusic
 -- TODO: getMusicHookData
