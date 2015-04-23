@@ -58,10 +58,6 @@ module SDL.Mixer
   , getOldest
   , getNewest
 
-  -- * Music
-  , musicDecoders
-  , Music(..)
-
   -- * Playing
   , play
   , playForever
@@ -93,6 +89,12 @@ module SDL.Mixer
   , fadeOutGroup
   , Fading
   , fading
+
+  -- * Music
+  , musicDecoders
+  , Music(..)
+  , playMusic
+  , playingMusic
 
   -- * Setting the volume
   , Volume
@@ -731,6 +733,12 @@ musicDecoders =
       SDL.Raw.Mixer.getMusicDecoder i >>= peekCString
 
 -- | A loaded music file.
+--
+-- 'Music' is played on a separate channel different from the normal mixing
+-- 'Channel's.
+--
+-- To manipulate 'Music' outside of post-processing callbacks, use the music
+-- variant functions listed below.
 newtype Music = Music (Ptr SDL.Raw.Mixer.Music) deriving (Eq, Show)
 
 instance Loadable Music where
@@ -742,6 +750,24 @@ instance Loadable Music where
           SDL.Raw.Mixer.loadMUS_RW rw 0
 
   free (Music p) = liftIO $ SDL.Raw.Mixer.freeMusic p
+
+-- | Plays a given 'Music' a certain number of 'Times'.
+--
+-- The previously playing 'Music' will be halted, unless it is fading out in
+-- which case a blocking wait occurs until it fades out completely.
+playMusic :: MonadIO m => Times -> Music -> m ()
+playMusic times (Music p) =
+  throwIfNeg_ "SDL.Mixer.playMusic" "Mix_PlayMusic" $
+    SDL.Raw.Mixer.playMusic p $
+      case times of
+        Forever -> (-1)
+        Times t -> t -- The interpretation of loops differs from normal play? :/
+
+-- | Returns whether a 'Music' is currently playing or not.
+--
+-- Note that this returns 'True' even if the 'Music' is currently paused.
+playingMusic :: MonadIO m => m Bool
+playingMusic = (> 0) <$> SDL.Raw.Mixer.playingMusic
 
 -- Music
 -- TODO: playMusic
