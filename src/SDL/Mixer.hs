@@ -90,6 +90,10 @@ module SDL.Mixer
   , Fading
   , fading
 
+  -- * Setting the volume
+  , Volume
+  , HasVolume(..)
+
   -- * Music
   , musicDecoders
   , Music(..)
@@ -99,6 +103,8 @@ module SDL.Mixer
   -- * Setting the volume
   , Volume
   , HasVolume(..)
+  , getMusicVolume
+  , setMusicVolume
 
   ) where
 
@@ -769,12 +775,20 @@ playMusic times (Music p) =
 playingMusic :: MonadIO m => m Bool
 playingMusic = (> 0) <$> SDL.Raw.Mixer.playingMusic
 
+-- | Gets the current 'Volume' setting for 'Music'.
+getMusicVolume :: MonadIO m => m Volume
+getMusicVolume = fmap fromIntegral $ SDL.Raw.Mixer.volumeMusic (-1)
+
+-- | Sets the 'Volume' for 'Music'.
+--
+-- Note that this won't work if any 'Music' is currently fading.
+setMusicVolume :: MonadIO m => Volume -> m ()
+setMusicVolume v = void . SDL.Raw.Mixer.volumeMusic $ volumeToCInt v
+
 -- Music
--- TODO: playMusic
 -- TODO: fadeInMusic
 -- TODO: fadeInMusicPos
 -- TODO: hookMusic
--- TODO: volumeMusic
 -- TODO: pauseMusic
 -- TODO: resumeMusic
 -- TODO: rewindMusic
