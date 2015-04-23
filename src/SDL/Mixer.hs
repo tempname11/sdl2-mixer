@@ -514,8 +514,9 @@ fadeOut ms (Channel c) = void $ SDL.Raw.Mixer.fadeOutChannel c $ fromIntegral ms
 -- Using 'DefaultGroup' here is the same as calling 'fadeOut' with
 -- 'AllChannels'.
 fadeOutGroup :: MonadIO m => Milliseconds -> Group -> m ()
-fadeOutGroup ms (Group g) =
-  void $ SDL.Raw.Mixer.fadeOutGroup g $ fromIntegral ms
+fadeOutGroup ms = \case
+  DefaultGroup -> fadeOut ms AllChannels
+  Group g      -> void $ SDL.Raw.Mixer.fadeOutGroup g $ fromIntegral ms
 
 -- | Pauses the given 'Channel', if it is actively playing.
 --
