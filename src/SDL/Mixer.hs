@@ -900,17 +900,9 @@ setMusicVolume v = void . SDL.Raw.Mixer.volumeMusic $ volumeToCInt v
 
 -- Music
 -- TODO: hookMusic
--- TODO: pauseMusic
--- TODO: resumeMusic
--- TODO: rewindMusic
--- TODO: setMusicPosition
 -- TODO: setMusicCMD
--- TODO: haltMusic
--- TODO: fadeOutMusic
 -- TODO: hookMusicFinished
 -- TODO: getMusicType
--- TODO: pausedMusic
--- TODO: fadingMusic
 -- TODO: getMusicHookData
 
 -- Effects
