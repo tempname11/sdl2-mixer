@@ -99,10 +99,8 @@ module SDL.Mixer
   , Music(..)
   , playMusic
   , playingMusic
-
-  -- * Setting the volume
-  , Volume
-  , HasVolume(..)
+  , fadeInMusic
+  , fadeInMusicAt
   , getMusicVolume
   , setMusicVolume
 
@@ -775,6 +773,29 @@ playMusic times (Music p) =
 playingMusic :: MonadIO m => m Bool
 playingMusic = (> 0) <$> SDL.Raw.Mixer.playingMusic
 
+-- | Plays a given 'Music' a number of 'Times', but fading it in during a
+-- certain number of 'Milliseconds'.
+--
+-- The fading only occurs during the first time the 'Music' is played.
+--
+-- This is the same as calling 'fadeInMusicAt' with a position of 0.
+fadeInMusic :: MonadIO m => Milliseconds -> Times -> Music -> m ()
+fadeInMusic = fadeInMusicAt 0
+
+-- | A position in milliseconds within a piece of 'Music'.
+type Position = Milliseconds
+
+-- | Same as 'fadeInMusic', but with a custom starting `Music`'s 'Position'.
+fadeInMusicAt :: MonadIO m => Position -> Milliseconds -> Times -> Music -> m ()
+fadeInMusicAt at ms times (Music p) =
+  throwIfNeg_ "SDL.Mixer.fadeInMusicAt" "Mix_FadeInMusicPos" $
+    SDL.Raw.Mixer.fadeInMusicPos
+      p t' (fromIntegral ms) (realToFrac at)
+  where
+    t' = case times of
+      Forever -> (-1)
+      Times t -> max 1 t
+
 -- | Gets the current 'Volume' setting for 'Music'.
 getMusicVolume :: MonadIO m => m Volume
 getMusicVolume = fmap fromIntegral $ SDL.Raw.Mixer.volumeMusic (-1)
@@ -786,8 +807,6 @@ setMusicVolume :: MonadIO m => Volume -> m ()
 setMusicVolume v = void . SDL.Raw.Mixer.volumeMusic $ volumeToCInt v
 
 -- Music
--- TODO: fadeInMusic
--- TODO: fadeInMusicPos
 -- TODO: hookMusic
 -- TODO: pauseMusic
 -- TODO: resumeMusic
