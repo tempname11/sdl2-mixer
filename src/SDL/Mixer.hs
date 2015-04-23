@@ -350,7 +350,7 @@ instance Loadable Chunk where
     unsafeUseAsCStringLen bytes $ \(cstr, len) -> do
       rw <- rwFromConstMem (castPtr cstr) (fromIntegral len)
       fmap Chunk .
-        throwIfNull "SDL.Mixer.decode<Chunk>" "IMG_LoadWAV_RW" $
+        throwIfNull "SDL.Mixer.decode<Chunk>" "Mix_LoadWAV_RW" $
           SDL.Raw.Mixer.loadWAV_RW rw 0
 
   free (Chunk p) = liftIO $ SDL.Raw.Mixer.freeChunk p
@@ -738,7 +738,7 @@ instance Loadable Music where
     unsafeUseAsCStringLen bytes $ \(cstr, len) -> do
       rw <- rwFromConstMem (castPtr cstr) (fromIntegral len)
       fmap Music .
-        throwIfNull "SDL.Mixer.decode<Music>" "IMG_LoadMUS_RW" $
+        throwIfNull "SDL.Mixer.decode<Music>" "Mix_LoadMUS_RW" $
           SDL.Raw.Mixer.loadMUS_RW rw 0
 
   free (Music p) = liftIO $ SDL.Raw.Mixer.freeMusic p
