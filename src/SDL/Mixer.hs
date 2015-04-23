@@ -46,8 +46,9 @@ module SDL.Mixer
   , pattern AllChannels
   , setChannels
   , getChannels
-  , playedLast
+  , reserveChannels
   , whenChannelFinished
+  , playedLast
 
   -- * Music
   , musicDecoders
@@ -382,6 +383,16 @@ setChannels = void . SDL.Raw.Mixer.allocateChannels . fromIntegral . max 0
 -- | Gets the number of 'Channel's currently in use.
 getChannels :: MonadIO m => m Int
 getChannels = fromIntegral <$> SDL.Raw.Mixer.allocateChannels (-1)
+
+-- | Reserve a given number of 'Channel's, starting from 'Channel' 0.
+--
+-- A reserved 'Channel' is considered not to be available for playing samples
+-- when using any 'play' or 'fadeIn' function variant with 'AllChannels'. In
+-- other words, whenever you let 'SDL.Mixer' pick the first available 'Channel'
+-- itself, these reserved 'Channel's will not be considered.
+reserveChannels :: MonadIO m => Int -> m Int
+reserveChannels =
+  fmap fromIntegral . SDL.Raw.Mixer.reserveChannels . fromIntegral
 
 -- | Gets the most recent 'Chunk' played on a 'Channel', if any.
 --
