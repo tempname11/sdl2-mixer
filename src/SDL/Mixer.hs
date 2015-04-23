@@ -99,13 +99,17 @@ module SDL.Mixer
   , Music(..)
   , playMusic
   , pauseMusic
+  , haltMusic
   , resumeMusic
   , rewindMusic
   , playingMusic
+  , pausedMusic
+  , fadingMusic
   , Position
   , fadeInMusic
   , fadeInMusicAt
   , fadeInMusicAtMOD
+  , fadeOutMusic
   , getMusicVolume
   , setMusicVolume
   , setMusicPosition
@@ -780,6 +784,10 @@ playMusic times (Music p) =
 pauseMusic :: MonadIO m => m ()
 pauseMusic = SDL.Raw.Mixer.pauseMusic
 
+-- | Halts 'Music' playback.
+haltMusic :: MonadIO m => m ()
+haltMusic = void SDL.Raw.Mixer.haltMusic
+
 -- | Resumes 'Music' playback.
 --
 -- This works on both paused and halted 'Music'.
@@ -793,6 +801,12 @@ resumeMusic = SDL.Raw.Mixer.resumeMusic
 -- Note that this returns 'True' even if the 'Music' is currently paused.
 playingMusic :: MonadIO m => m Bool
 playingMusic = (> 0) <$> SDL.Raw.Mixer.playingMusic
+
+-- | Returns whether a 'Music' is currently paused or not.
+--
+-- Note that this returns 'False' if the 'Music' is currently halted.
+pausedMusic :: MonadIO m => m Bool
+pausedMusic = (> 0) <$> SDL.Raw.Mixer.pausedMusic
 
 -- | Rewinds the 'Music' to the beginning.
 --
@@ -814,6 +828,15 @@ fadeInMusic ms times (Music p) =
     t' = case times of
       Forever -> (-1)
       Times t -> max 1 t
+
+-- | Gradually fade out the 'Music' over a given number of 'Milliseconds'.
+--
+-- The 'Music' is set to fade out only when it is playing and not fading
+-- already.
+--
+-- Returns whether the 'Music' was successfully set to fade out.
+fadeOutMusic :: MonadIO m => Milliseconds -> m Bool
+fadeOutMusic = fmap (== 1) . SDL.Raw.Mixer.fadeOutMusic . fromIntegral
 
 -- | A position in milliseconds within a piece of 'Music'.
 type Position = Milliseconds
@@ -860,6 +883,10 @@ fadeInMusicAtMOD at ms times (Music p) =
     t' = case times of
       Forever -> (-1)
       Times t -> max 1 t
+
+-- | Returns the `Music`'s 'Fading' status.
+fadingMusic :: MonadIO m => m Fading
+fadingMusic = wordToFading <$> SDL.Raw.Mixer.fadingMusic
 
 -- | Gets the current 'Volume' setting for 'Music'.
 getMusicVolume :: MonadIO m => m Volume
