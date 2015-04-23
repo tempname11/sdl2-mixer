@@ -4,15 +4,14 @@
 
 #### Haskell bindings to SDL2_mixer
 
-The raw bindings are complete, but the higher-level ones are still missing:
+The raw bindings are complete, but the higher-level ones are still missing the
+following functionality:
 
-* Music: setting finished hooks, getting music data, using external cmd
+* Music: setting finished hooks, getting music data, using external command
 * Effects: everything
 * Sound font support
 
-<!-- Both the raw and the higher level bindings should allow you to use any aspect -->
-<!-- of the original SDL2_mixer library. Please report an issue if you encounter a -->
-<!-- bug or feel that something is missing -->
+Please report an issue if you encounter a bug.
 
 ##### Install
 
