@@ -806,7 +806,13 @@ rewindMusic = SDL.Raw.Mixer.rewindMusic
 --
 -- This is the same as calling 'fadeInMusicAt' with a position of 0.
 fadeInMusic :: MonadIO m => Milliseconds -> Times -> Music -> m ()
-fadeInMusic = fadeInMusicAt 0
+fadeInMusic ms times (Music p) =
+  throwIfNeg_ "SDL.Mixer.fadeInMusic" "Mix_FadeInMusic" $
+    SDL.Raw.Mixer.fadeInMusic p t' (fromIntegral ms)
+  where
+    t' = case times of
+      Forever -> (-1)
+      Times t -> max 1 t
 
 -- | A position in milliseconds within a piece of 'Music'.
 type Position = Milliseconds
