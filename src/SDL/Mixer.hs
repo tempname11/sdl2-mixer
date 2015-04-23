@@ -376,6 +376,11 @@ instance Show Channel where
     AllChannels -> "AllChannels"
     Channel c   -> "Channel " ++ show c
 
+-- The lowest-numbered channel is CHANNEL_POST, or -2, for post processing
+-- effects. This function makes sure a channel is higher than CHANNEL_POST.
+clipChan :: CInt -> CInt
+clipChan = max SDL.Raw.Mixer.CHANNEL_POST
+
 -- | Prepares a given number of 'Channel's for use.
 --
 -- There are 8 such 'Channel's already prepared for use after 'openAudio' is
@@ -411,7 +416,7 @@ reserveChannels =
 -- Note that the returned 'Chunk' might be invalid if it was already 'free'd.
 playedLast :: MonadIO m => Channel -> m (Maybe Chunk)
 playedLast (Channel c) = do
-  p <- SDL.Raw.Mixer.getChunk c
+  p <- SDL.Raw.Mixer.getChunk $ clipChan c
   return $ if p == nullPtr then Nothing else Just (Chunk p)
 
 -- | Use this value when you wish to perform an operation on /all/ 'Channel's.
@@ -420,8 +425,10 @@ playedLast (Channel c) = do
 pattern AllChannels = (-1) :: Channel
 
 instance HasVolume Channel where
-  getVolume   (Channel c) = fmap fromIntegral $ SDL.Raw.Mixer.volume c (-1)
-  setVolume v (Channel c) = void . SDL.Raw.Mixer.volume c $ volumeToCInt v
+  setVolume v (Channel c) =
+    void . SDL.Raw.Mixer.volume (clipChan c) $ volumeToCInt v
+  getVolume (Channel c) =
+    fmap fromIntegral $ SDL.Raw.Mixer.volume (clipChan c) (-1)
 
 -- | Play a 'Chunk' once, using the first available 'Channel'.
 play :: MonadIO m => Chunk -> m ()
@@ -468,7 +475,9 @@ pattern NoLimit = (-1) :: Limit
 playLimit :: MonadIO m => Limit -> Channel -> Times -> Chunk -> m Channel
 playLimit l (Channel c) (Times t) (Chunk p) =
   throwIfNeg "SDL.Mixer.playLimit" "Mix_PlayChannelTimed" $
-    fromIntegral <$> SDL.Raw.Mixer.playChannelTimed c p (t - 1) (fromIntegral l)
+    fmap fromIntegral $
+      SDL.Raw.Mixer.playChannelTimed
+        (clipChan c) p (t - 1) (fromIntegral l)
 
 -- | Same as 'play', but fades in the 'Chunk' by making the 'Channel' 'Volume'
 -- start at 0 and rise to a full 128 over the course of a given number of
@@ -500,14 +509,15 @@ fadeInLimit l (Channel c) (Times t) ms (Chunk p) =
   throwIfNeg "SDL.Mixer.fadeInLimit" "Mix_FadeInChannelTimed" $
     fromIntegral <$>
       SDL.Raw.Mixer.fadeInChannelTimed
-        c p (t - 1) (fromIntegral ms) (fromIntegral l)
+        (clipChan c) p (t - 1) (fromIntegral ms) (fromIntegral l)
 
 -- | Gradually fade out a given playing 'Channel' during the next
 -- 'Milliseconds', even if it is 'pause'd.
 --
 -- If 'AllChannels' is used, fades out all the playing 'Channel's instead.
 fadeOut :: MonadIO m => Milliseconds -> Channel -> m ()
-fadeOut ms (Channel c) = void $ SDL.Raw.Mixer.fadeOutChannel c $ fromIntegral ms
+fadeOut ms (Channel c) =
+  void $ SDL.Raw.Mixer.fadeOutChannel (clipChan c) $ fromIntegral ms
 
 -- | Same as 'fadeOut', but fades out an entire 'Group' instead.
 --
@@ -525,15 +535,15 @@ fadeOutGroup ms = \case
 --
 -- Note that 'pause'd 'Channel's may still be 'halt'ed.
 pause :: MonadIO m => Channel -> m ()
-pause (Channel c) = SDL.Raw.Mixer.pause c
+pause (Channel c) = SDL.Raw.Mixer.pause $ clipChan c
 
 -- | Resumes playing a 'Channel', or all 'Channel's if 'AllChannels' is used.
 resume :: MonadIO m => Channel -> m ()
-resume (Channel c) = SDL.Raw.Mixer.resume c
+resume (Channel c) = SDL.Raw.Mixer.resume $ clipChan c
 
 -- | Halts playback on a 'Channel', or all 'Channel's if 'AllChannels' is used.
 halt :: MonadIO m => Channel -> m ()
-halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
+halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel $ clipChan c
 
 -- | Same as 'halt', but only does so after a certain number of 'Milliseconds'.
 --
@@ -541,7 +551,7 @@ halt (Channel c) = void $ SDL.Raw.Mixer.haltChannel c
 -- time instead.
 haltAfter :: MonadIO m => Milliseconds -> Channel -> m ()
 haltAfter ms (Channel c) =
-  void . SDL.Raw.Mixer.expireChannel c $ fromIntegral ms
+  void . SDL.Raw.Mixer.expireChannel (clipChan c) $ fromIntegral ms
 
 -- | Same as 'halt', but halts an entire 'Group' instead.
 --
@@ -550,7 +560,7 @@ haltAfter ms (Channel c) =
 haltGroup :: MonadIO m => Group -> m ()
 haltGroup = \case
   DefaultGroup -> halt AllChannels
-  Group g      -> void $ SDL.Raw.Mixer.haltGroup g
+  Group g      -> void $ SDL.Raw.Mixer.haltGroup $ max 0 g
 
 -- Quackery of the highest order! We keep track of a pointer we gave SDL_mixer,
 -- so we can free it at a later time. May the gods have mercy...
@@ -584,7 +594,7 @@ whenChannelFinished callback = liftIO $ do
 -- If 'AllChannels' is used, this returns whether /any/ of the channels is
 -- currently playing.
 playing :: MonadIO m => Channel -> m Bool
-playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing c
+playing (Channel c) = (> 0) <$> SDL.Raw.Mixer.playing (clipChan c)
 
 -- | Returns how many 'Channel's are currently playing.
 playingCount :: MonadIO m => m Int
@@ -595,7 +605,7 @@ playingCount = fromIntegral <$> SDL.Raw.Mixer.playing (-1)
 -- If 'AllChannels' is used, this returns whether /any/ of the channels is
 -- currently paused.
 paused :: MonadIO m => Channel -> m Bool
-paused (Channel c) = (> 0) <$> SDL.Raw.Mixer.paused c
+paused (Channel c) = (> 0) <$> SDL.Raw.Mixer.paused (clipChan c)
 
 -- | Returns how many 'Channel's are currently paused.
 pausedCount :: MonadIO m => m Int
@@ -617,7 +627,8 @@ wordToFading = \case
 -- Note that using 'AllChannels' here is not valid, and will simply return the
 -- 'Fading' status of the first 'Channel' instead.
 fading :: MonadIO m => Channel -> m Fading
-fading (Channel c) = wordToFading <$> SDL.Raw.Mixer.fadingChannel c
+fading (Channel c) =
+  wordToFading <$> SDL.Raw.Mixer.fadingChannel (clipChan c)
 
 -- | A group of 'Channel's.
 --
@@ -649,7 +660,10 @@ group wrapped@(Group g) channel =
       else
         return True -- No channels available -- still a success probably.
     Channel c ->
-      (== 1) <$> SDL.Raw.Mixer.groupChannel c g
+      if c >= 0 then
+        (== 1) <$> SDL.Raw.Mixer.groupChannel c g
+      else
+        return False -- Can't group the post-processing channel or below.
 
 -- | Same as 'groupChannel', but groups all 'Channel's between the first and
 -- last given, inclusive.
@@ -663,8 +677,10 @@ group wrapped@(Group g) channel =
 -- less than the number of 'Channel's given, for instance if some of them do
 -- not exist.
 groupSpan :: MonadIO m => Group -> Channel -> Channel -> m Int
-groupSpan (Group g) (Channel from) (Channel to) =
-  fromIntegral <$> SDL.Raw.Mixer.groupChannels from to g
+groupSpan wrap@(Group g) from@(Channel c1) to@(Channel c2)
+  | c1 < 0 || c2 < 0 = return 0
+  | c1 > c2          = groupSpan wrap to from
+  | otherwise        = fromIntegral <$> SDL.Raw.Mixer.groupChannels c1 c2 g
 
 -- | Returns the number of 'Channels' within a 'Group'.
 --

@@ -140,6 +140,7 @@ module SDL.Raw.Mixer
 
   -- * Effects
   , registerEffect
+  , pattern CHANNEL_POST
   , unregisterEffect
   , unregisterAllEffects
   , setPostMix
@@ -457,6 +458,8 @@ liftF "getMusicHookData" "Mix_GetMusicHookData"
   [t|IO (Ptr ())|]
 
 -- 4.6 Effects
+
+pattern CHANNEL_POST = (#const MIX_CHANNEL_POST)
 
 liftF "registerEffect" "Mix_RegisterEffect"
   [t|Channel ->
