@@ -1,10 +1,11 @@
 import qualified SDL.Raw.Mixer as Mix
 import qualified SDL
 
-import Foreign.C.String
-import Foreign.Ptr
-import System.Environment
-import System.Exit
+import Control.Monad      (unless, when)
+import Foreign.C.String   (withCString)
+import Foreign.Ptr        (nullPtr)
+import System.Environment (getArgs)
+import System.Exit        (exitFailure)
 
 main :: IO ()
 main = do
@@ -15,7 +16,7 @@ main = do
       (arg:_) -> return arg
       _ -> do
         putStrLn "Usage: cabal run sdl2-mixer-raw <sound filename>"
-        exitWith $ ExitFailure 1
+        exitFailure
 
   -- initialize libraries
   SDL.initialize [SDL.InitAudio]
@@ -52,12 +53,9 @@ main = do
   SDL.quit
 
 assert :: Bool -> IO ()
-assert x = if x
-           then return ()
-           else error "Assertion failed"
+assert = flip unless $ error "Assertion failed"
 
 whileTrueM :: Monad m => m Bool -> m ()
 whileTrueM cond = do
   loop <- cond
-  if loop then whileTrueM cond
-          else return ()
+  when loop $ whileTrueM cond

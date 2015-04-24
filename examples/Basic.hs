@@ -1,9 +1,10 @@
 import qualified SDL.Mixer as Mix
 import qualified SDL
 
-import Data.Default.Class
-import System.Environment
-import System.Exit
+import Control.Monad      (when)
+import Data.Default.Class (def)
+import System.Environment (getArgs)
+import System.Exit        (exitFailure)
 
 main :: IO ()
 main = do
@@ -14,7 +15,7 @@ main = do
       (arg:_) -> return arg
       _ -> do
         putStrLn "Usage: cabal run sdl2-mixer-basic <sound filename>"
-        exitWith $ ExitFailure 1
+        exitFailure
 
   -- initialize libraries
   SDL.initialize [SDL.InitAudio]
@@ -45,5 +46,4 @@ main = do
 whileTrueM :: Monad m => m Bool -> m ()
 whileTrueM cond = do
   loop <- cond
-  if loop then whileTrueM cond
-          else return ()
+  when loop $ whileTrueM cond
