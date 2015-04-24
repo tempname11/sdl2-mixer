@@ -18,7 +18,7 @@ cabal-version: >=1.10
 --   location: https://github.com/tempname011/sdl2-image.git
 
 library
-  ghc-options: -Wall -O2
+  ghc-options: -Wall
 
   exposed-modules:
     SDL.Mixer,
