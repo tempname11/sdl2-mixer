@@ -7,11 +7,11 @@
 The raw bindings are complete, but the higher-level ones are still missing the
 following functionality:
 
-* Music: setting finished hooks, getting music data, using external command
-* Effects: everything
-* Sound font support
+* _using external or custom music players_,
+* _effects_, and
+* _sound font support_.
 
-Please report an issue if you encounter a bug.
+Please report an issue if you encounter a bug or feel something is missing.
 
 ##### Install
 
