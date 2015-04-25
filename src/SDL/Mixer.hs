@@ -114,6 +114,8 @@ module SDL.Mixer
   , setMusicVolume
   , setMusicPosition
   , setMusicPositionMOD
+  , MusicType(..)
+  , musicType
 
   ) where
 
@@ -897,6 +899,38 @@ getMusicVolume = fmap fromIntegral $ SDL.Raw.Mixer.volumeMusic (-1)
 -- Note that this won't work if any 'Music' is currently fading.
 setMusicVolume :: MonadIO m => Volume -> m ()
 setMusicVolume v = void . SDL.Raw.Mixer.volumeMusic $ volumeToCInt v
+
+-- | A `Music`'s type.
+data MusicType
+  = CMD
+  | WAV
+  | MOD
+  | MID
+  | OGG
+  | MP3
+  | MP3_MAD
+  | FLAC
+  | MODPlug
+  deriving (Eq, Show, Read, Ord, Bounded)
+
+wordToMusicType :: SDL.Raw.Mixer.MusicType -> Maybe MusicType
+wordToMusicType = \case
+  SDL.Raw.Mixer.MUS_NONE    -> Nothing
+  SDL.Raw.Mixer.MUS_CMD     -> Just CMD
+  SDL.Raw.Mixer.MUS_WAV     -> Just WAV
+  SDL.Raw.Mixer.MUS_MOD     -> Just MOD
+  SDL.Raw.Mixer.MUS_MID     -> Just MID
+  SDL.Raw.Mixer.MUS_OGG     -> Just OGG
+  SDL.Raw.Mixer.MUS_MP3     -> Just MP3
+  SDL.Raw.Mixer.MUS_MP3_MAD -> Just MP3_MAD
+  SDL.Raw.Mixer.MUS_FLAC    -> Just FLAC
+  SDL.Raw.Mixer.MUS_MODPLUG -> Just MODPlug
+  _                         -> Nothing
+
+-- | Gets the 'MusicType' of a given 'Music'.
+musicType :: Music -> Maybe MusicType
+musicType (Music p) =
+  wordToMusicType $ unsafePerformIO (SDL.Raw.Mixer.getMusicType p)
 
 -- Music
 -- TODO: hookMusic

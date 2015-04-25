@@ -27,6 +27,7 @@ main = do
 runExample :: FilePath -> IO ()
 runExample path = do
   music <- Mix.load path
+  print $ Mix.musicType music
   Mix.playMusic Mix.Once music
   delayWhile Mix.playingMusic
   Mix.free music
