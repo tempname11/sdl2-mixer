@@ -116,6 +116,7 @@ module SDL.Mixer
   , setMusicPositionMOD
   , MusicType(..)
   , musicType
+  , playingMusicType
 
   ) where
 
@@ -931,6 +932,10 @@ wordToMusicType = \case
 musicType :: Music -> Maybe MusicType
 musicType (Music p) =
   wordToMusicType $ unsafePerformIO (SDL.Raw.Mixer.getMusicType p)
+
+-- | Gets the 'MusicType' of currently playing 'Music', if any.
+playingMusicType :: MonadIO m => m (Maybe MusicType)
+playingMusicType = wordToMusicType <$> SDL.Raw.Mixer.getMusicType nullPtr
 
 -- Music
 -- TODO: hookMusic
