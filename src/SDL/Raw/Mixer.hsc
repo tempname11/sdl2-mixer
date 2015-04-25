@@ -120,6 +120,7 @@ module SDL.Raw.Mixer
   , setMusicCMD
   , haltMusic
   , fadeOutMusic
+  , wrapMusicCallback
   , hookMusicFinished
   , MusicType
   , getMusicType
@@ -438,6 +439,9 @@ liftF "haltMusic" "Mix_HaltMusic"
 
 liftF "fadeOutMusic" "Mix_FadeOutMusic"
   [t|CInt -> IO CInt|]
+
+foreign import ccall "wrapper"
+  wrapMusicCallback :: IO () -> IO (FunPtr (IO ()))
 
 liftF "hookMusicFinished" "Mix_HookMusicFinished"
   [t|FunPtr (IO ()) -> IO ()|]

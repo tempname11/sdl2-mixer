@@ -117,6 +117,7 @@ module SDL.Mixer
   , MusicType(..)
   , musicType
   , playingMusicType
+  , whenMusicFinished
 
   ) where
 
@@ -937,11 +938,25 @@ musicType (Music p) =
 playingMusicType :: MonadIO m => m (Maybe MusicType)
 playingMusicType = wordToMusicType <$> SDL.Raw.Mixer.getMusicType nullPtr
 
+-- More quackery, but this time for the music finished callback.
+{-# NOINLINE musicFinishedFunPtr #-}
+musicFinishedFunPtr :: IORef (FunPtr (IO ()))
+musicFinishedFunPtr = unsafePerformIO $ newIORef nullFunPtr
+
+-- | Sets a callback that gets invoked each time a 'Music' finishes playing.
+--
+-- __Note: don't call other 'SDL.Mixer' functions within this callback.__
+whenMusicFinished :: MonadIO m => IO () -> m ()
+whenMusicFinished callback = liftIO $ do
+  callbackRaw <- SDL.Raw.Mixer.wrapMusicCallback callback
+  SDL.Raw.Mixer.hookMusicFinished callbackRaw
+  lastFunPtr <- readIORef musicFinishedFunPtr
+  when (lastFunPtr /= nullFunPtr) $ freeHaskellFunPtr lastFunPtr
+  writeIORef musicFinishedFunPtr callbackRaw
+
 -- Music
 -- TODO: hookMusic
 -- TODO: setMusicCMD
--- TODO: hookMusicFinished
--- TODO: getMusicType
 -- TODO: getMusicHookData
 
 -- Effects
