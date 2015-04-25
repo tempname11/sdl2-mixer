@@ -19,47 +19,40 @@ Bindings to the @SDL2_mixer@ library.
 
 module SDL.Mixer
   (
-  -- * Initialization
-    initialize
-  , InitFlag(..)
-  , quit
-  , version
-
-  -- * Configuring audio
-  , openAudio
+  -- * Audio setup
+  --
+  -- | In order to use the rest of the library, you need to
+  -- supply 'withAudio' or 'openAudio' with an 'Audio' configuration.
+    withAudio
   , Audio(..)
-  , defaultAudio
-  , ChunkSize
   , Format(..)
   , Output(..)
+  , defaultAudio
+  , ChunkSize
   , queryAudio
+
+  -- ** Alternative
+  , openAudio
   , closeAudio
 
   -- * Loading audio data
+  --
+  -- | Use 'load' or 'decode' to get both 'Chunk' and 'Music' values.
   , Loadable(..)
+  , Chunk(..)
+  , chunkDecoders
+  , Music(..)
+  , musicDecoders
 
   -- * Chunks
-  , chunkDecoders
-  , Chunk(..)
+  --
+  -- | 'Chunk's are played on 'Channel's, which can be combined into 'Group's.
 
-  -- * Channels and groups
+  -- ** Playing chunks
   , Channel
   , pattern AllChannels
   , setChannels
   , getChannels
-  , whenChannelFinished
-  , playedLast
-  , reserveChannels
-  , Group
-  , pattern DefaultGroup
-  , group
-  , groupSpan
-  , groupCount
-  , getAvailable
-  , getOldest
-  , getNewest
-
-  -- * Playing
   , play
   , playForever
   , Times
@@ -70,55 +63,94 @@ module SDL.Mixer
   , Limit
   , pattern NoLimit
   , playLimit
+  , fadeIn
+  , fadeInOn
+  , fadeInLimit
 
-  -- * Pausing, resuming, halting
+  -- ** Grouping channels
+  , reserveChannels
+  , Group
+  , pattern DefaultGroup
+  , group
+  , groupSpan
+  , groupCount
+  , getAvailable
+  , getOldest
+  , getNewest
+
+  -- ** Controlling playback
   , pause
   , resume
   , halt
   , haltAfter
   , haltGroup
+
+  -- ** Setting the volume
+  , Volume
+  , HasVolume(..)
+
+  -- ** Querying for status
   , playing
   , playingCount
   , paused
   , pausedCount
-
-  -- * Fading in and out
-  , fadeIn
-  , fadeInOn
-  , fadeInLimit
-  , fadeOut
-  , fadeOutGroup
+  , playedLast
   , Fading
   , fading
 
-  -- * Setting the volume
-  , Volume
-  , HasVolume(..)
+  -- ** Fading out
+  , fadeOut
+  , fadeOutGroup
+
+  -- ** Reacting to finish
+  , whenChannelFinished
 
   -- * Music
-  , musicDecoders
-  , Music(..)
+  --
+  -- | 'Chunk's and 'Music' differ by the way they are played. While multiple
+  -- 'Chunk's can be played on different desired 'Channel's at the same time,
+  -- there can only be one 'Music' playing at the same time.
+  --
+  -- Therefore, the functions used for 'Music' are separate.
+
+  -- ** Playing music
   , playMusic
-  , pauseMusic
-  , haltMusic
-  , resumeMusic
-  , rewindMusic
-  , playingMusic
-  , pausedMusic
-  , fadingMusic
   , Position
   , fadeInMusic
   , fadeInMusicAt
   , fadeInMusicAtMOD
-  , fadeOutMusic
-  , getMusicVolume
-  , setMusicVolume
+
+  -- ** Controlling playback
+  , pauseMusic
+  , haltMusic
+  , resumeMusic
+  , rewindMusic
   , setMusicPosition
   , setMusicPositionMOD
+
+  -- ** Setting the volume
+  , setMusicVolume
+  , getMusicVolume
+
+  -- ** Querying for status
+  , playingMusic
+  , pausedMusic
+  , fadingMusic
   , MusicType(..)
   , musicType
   , playingMusicType
+
+  -- ** Fading out
+  , fadeOutMusic
+
+  -- ** Reacting to finish
   , whenMusicFinished
+
+  -- * Other
+  , initialize
+  , InitFlag(..)
+  , quit
+  , version
 
   ) where
 
