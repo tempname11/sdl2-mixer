@@ -8,6 +8,7 @@ Bindings to the @SDL2_mixer@ library.
 
 -}
 
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
@@ -121,23 +122,25 @@ module SDL.Mixer
 
   ) where
 
-import Control.Monad          (void, forM, when)
+import Control.Exception.Lifted (finally)
+import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Bits              ((.|.), (.&.))
-import Data.ByteString        (ByteString, readFile)
+import Control.Monad.Trans.Control (MonadBaseControl)
+import Data.Bits ((.|.), (.&.))
+import Data.ByteString (ByteString, readFile)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
-import Data.Default.Class     (Default(def))
-import Data.Foldable          (foldl)
-import Data.IORef             (IORef, newIORef, readIORef, writeIORef)
-import Foreign.C.String       (peekCString)
-import Foreign.C.Types        (CInt)
-import Foreign.Marshal.Alloc  (alloca)
-import Foreign.Ptr            (Ptr, FunPtr, castPtr, nullFunPtr, nullPtr, freeHaskellFunPtr)
-import Foreign.Storable       (Storable(..))
-import Prelude         hiding (foldl, readFile)
-import SDL.Exception          (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
-import SDL.Raw.Filesystem     (rwFromConstMem)
-import System.IO.Unsafe       (unsafePerformIO)
+import Data.Default.Class (Default(def))
+import Data.Foldable (foldl)
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import Foreign.C.String (peekCString)
+import Foreign.C.Types (CInt)
+import Foreign.Marshal.Alloc (alloca)
+import Foreign.Ptr (Ptr, FunPtr, castPtr, nullFunPtr, nullPtr, freeHaskellFunPtr)
+import Foreign.Storable (Storable(..))
+import Prelude hiding (foldl, readFile)
+import SDL.Exception (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
+import SDL.Raw.Filesystem (rwFromConstMem)
+import System.IO.Unsafe (unsafePerformIO)
 
 import qualified SDL.Raw
 import qualified SDL.Raw.Mixer
@@ -188,9 +191,22 @@ version = liftIO $ do
 
 -- | Initializes the @SDL2_mixer@ API.
 --
--- This should be the first function you call after intializing @SDL@ itself
+-- This should be the first function you call after initializing @SDL@ itself
 -- with 'SDL.Init.InitAudio'.
-openAudio :: (Functor m, MonadIO m) => Audio -> ChunkSize -> m ()
+--
+-- Automatically cleans up the API when the inner computation finishes.
+withAudio
+  :: (MonadBaseControl IO m, MonadIO m) => Audio -> ChunkSize -> m a -> m a
+withAudio conf csize act = do
+  openAudio conf csize
+  finally act closeAudio
+
+-- | An alternative to 'withAudio', also initializes the @SDL2_mixer@ API.
+--
+-- However, 'openAudio' does not take care of automatically calling
+-- 'closeAudio' after a computation ends, so you have to take care to do so
+-- manually.
+openAudio :: MonadIO m => Audio -> ChunkSize -> m ()
 openAudio (Audio {..}) chunkSize =
   throwIfNeg_ "SDL.Mixer.openAudio" "Mix_OpenAudio" $
     SDL.Raw.Mixer.openAudio
@@ -199,7 +215,7 @@ openAudio (Audio {..}) chunkSize =
       (outputToCInt audioOutput)
       (fromIntegral chunkSize)
 
--- | An audio configuration. Use this with 'openAudio'.
+-- | An audio configuration. Use this with 'withAudio'.
 data Audio = Audio
   { audioFrequency :: Int    -- ^ A sampling frequency.
   , audioFormat    :: Format -- ^ An output sample format.
@@ -281,8 +297,8 @@ cIntToOutput = \case
 -- | Get the audio format in use by the opened audio device.
 --
 -- This may or may not match the 'Audio' you asked for when calling
--- 'openAudio'.
-queryAudio :: (MonadIO m) => m Audio
+-- 'withAudio'.
+queryAudio :: MonadIO m => m Audio
 queryAudio =
   liftIO .
     alloca $ \freq ->
@@ -297,15 +313,16 @@ queryAudio =
 
 -- | Shut down and clean up the @SDL2_mixer@ API.
 --
--- After calling this, all audio stops and no functions except 'openAudio'
--- should be used.
+-- After calling this, all audio stops.
+--
+-- You don't have to call this if you're using 'withAudio'.
 closeAudio :: MonadIO m => m ()
 closeAudio = SDL.Raw.Mixer.closeAudio
 
 -- | A class of all values that can be loaded from some source. You can load
 -- both 'Chunk's and 'Music' this way.
 --
--- Note that you must call 'openAudio' before using these, since they have to
+-- Note that you must call 'withAudio' before using these, since they have to
 -- know the audio configuration to properly convert the data for playback.
 class Loadable a where
 
@@ -318,7 +335,7 @@ class Loadable a where
 
   -- | Frees the value's memory. It should no longer be used.
   --
-  -- Note that __you shouldn't free those values that are currently playing__.
+  -- __Note that you shouldn't free those values that are currently playing__.
   free :: MonadIO m => a -> m ()
 
 -- | A volume, where 0 is silent and 128 loudest.
@@ -404,7 +421,7 @@ clipChan = max SDL.Raw.Mixer.CHANNEL_POST
 
 -- | Prepares a given number of 'Channel's for use.
 --
--- There are 8 such 'Channel's already prepared for use after 'openAudio' is
+-- There are 8 such 'Channel's already prepared for use after 'withAudio' is
 -- called.
 --
 -- You may call this multiple times, even with sounds playing. If setting a
