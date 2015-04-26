@@ -154,6 +154,7 @@ module SDL.Mixer
 
   -- ** In-built effects
   , effectPan
+  , effectDistance
 
   -- * Other
   , initialize
@@ -1042,7 +1043,8 @@ type EffectFinished = Channel -> IO ()
 
 -- | A way to refer to the special 'Channel' used for post-processing effects.
 --
--- You can only use this value with 'effect'.
+-- You can only use this value with 'effect' and the other in-built effect
+-- functions such as 'effectPan' and 'effectDistance'.
 pattern PostProcessing = SDL.Raw.Mixer.CHANNEL_POST :: Channel
 
 -- | Adds a post-processing 'Effect' to a certain 'Channel'.
@@ -1073,30 +1075,37 @@ effect (Channel channel) fin ef = do
       when (removed == 0) $
         throwFailed "SDL.Raw.Mixer.removeEffect" "Mix_UnregisterEffect"
 
--- | Same as 'effect', but applies an in-built effect implementing panning.
+-- | Applies an in-built effect implementing panning.
 --
 -- Sets the left-channel and right-channel 'Volume' to the given values.
 --
 -- This only works when `Audio`'s 'Output' is 'Stereo', which is the default.
 --
--- Returns an action that, when executed, removes this 'Effect'.
+-- Returns an action that, when executed, removes this effect. That action
+-- simply calls 'effectPan' with 'Volumes' 128 and 128.
 effectPan :: MonadIO m => Channel -> Volume -> Volume -> m (m ())
-effectPan (Channel c) lVol rVol = do
-  result <- SDL.Raw.Mixer.setPanning c (wordVol lVol) (wordVol rVol)
-  if result == 0 then
-    throwFailed "SDL.Raw.Mixer.effectPan" "Mix_SetPanning"
-  else
-    return . void $ SDL.Raw.Mixer.setPanning c 255 255
-  where
-    wordVol :: Volume -> Word8
-    wordVol = fromIntegral . min 255 . (*2) . volumeToCInt
+effectPan channel@(Channel c) lVol rVol = do
+  void . throwIf0 "SDL.Raw.Mixer.effectPan" "Mix_SetPanning" $
+    SDL.Raw.Mixer.setPanning c (wordVol lVol) (wordVol rVol)
+  return . void $ effectPan channel 128 128
 
+wordVol :: Volume -> Word8
+wordVol = fromIntegral . min 255 . (*2) . volumeToCInt
 
+-- | Applies a different volume based on the distance (as 'Word8') specified.
+--
+-- The volume is loudest at distance 0, quietest at distance 255.
+--
+-- Returns an action that, when executed, removes this effect. That action
+-- simply calls 'effectDistance' with a distance of 0.
+effectDistance :: MonadIO m => Channel -> Word8 -> m (m ())
+effectDistance channel@(Channel c) dist = do
+  void . throwIf0 "SDL.Raw.Mixer.effectDistance" "Mix_SetDistance" $
+    SDL.Raw.Mixer.setDistance c dist
+  return . void $ effectDistance channel 0
 
 -- Effects
 -- TODO: setPostMix
--- TODO: setPanning
--- TODO: setDistance
 -- TODO: setPosition
 -- TODO: setReverseStereo
 
