@@ -50,6 +50,7 @@ library
     monad-control      >= 1.0,
     sdl2               >= 2.0.0,
     template-haskell,
+    text               >= 1.2,
     transformers       >= 0.2 && < 0.5,
     vector             >= 0.10
 

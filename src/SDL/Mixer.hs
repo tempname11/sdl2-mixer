@@ -146,6 +146,11 @@ module SDL.Mixer
   -- ** Reacting to finish
   , whenMusicFinished
 
+  -- * Effects
+  , addEffect
+  , Effect
+  , EffectFinished
+
   -- * Other
   , initialize
   , InitFlag(..)
@@ -154,7 +159,7 @@ module SDL.Mixer
 
   ) where
 
-import Control.Exception.Lifted (finally)
+import Control.Exception.Lifted (finally, throwIO)
 import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
@@ -164,13 +169,19 @@ import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Data.Default.Class (Default(def))
 import Data.Foldable (foldl)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import Data.Text (Text)
+import Data.Vector.Storable.Mutable (IOVector, unsafeFromForeignPtr0)
+import Data.Word (Word8)
 import Foreign.C.String (peekCString)
 import Foreign.C.Types (CInt)
 import Foreign.Marshal.Alloc (alloca)
-import Foreign.Ptr (Ptr, FunPtr, castPtr, nullFunPtr, nullPtr, freeHaskellFunPtr)
+import Foreign.ForeignPtr (newForeignPtr_, castForeignPtr)
+import Foreign.Ptr (Ptr, castPtr, nullPtr)
+import Foreign.Ptr (FunPtr, nullFunPtr, freeHaskellFunPtr)
 import Foreign.Storable (Storable(..))
 import Prelude hiding (foldl, readFile)
 import SDL.Exception (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
+import SDL.Exception (SDLException(SDLCallFailed), getError)
 import SDL.Raw.Filesystem (rwFromConstMem)
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -1008,10 +1019,47 @@ whenMusicFinished callback = liftIO $ do
 -- TODO: setMusicCMD
 -- TODO: getMusicHookData
 
+-- Allows us to just throw an SDL exception directly.
+throwFailed :: MonadIO m => Text -> Text -> m a
+throwFailed caller rawfunc =
+  liftIO $ throwIO =<< SDLCallFailed caller rawfunc <$> getError
+
+-- | A post-processing effect as a function operating on a mutable stream.
+type Effect = Channel -> IOVector Word8 -> IO ()
+
+-- | A function called when a processor is finished being used.
+--
+-- This allows you to clean up any state you might have had.
+type EffectFinished = Channel -> IO ()
+
+-- | Adds a post-processing 'Effect' to a certain 'Channel'.
+--
+-- A `Channel`'s 'Effect's are called in the order they were added.
+--
+-- Returns an action that, when executed, removes this 'Effect'.
+addEffect :: MonadIO m => Channel -> EffectFinished -> Effect -> m (m ())
+addEffect (Channel channel) finished effect = do
+
+  effect' <- liftIO $ SDL.Raw.Mixer.wrapEffect $ \c p len _ -> do
+    fp <- castForeignPtr <$> newForeignPtr_ p
+    effect (Channel c) . unsafeFromForeignPtr0 fp $ fromIntegral len
+
+  finished' <- liftIO $ SDL.Raw.Mixer.wrapEffectFinished $ \c _ ->
+    finished $ Channel c
+
+  result <- SDL.Raw.Mixer.registerEffect channel effect' finished' nullPtr
+
+  if result == 0 then
+    throwFailed "SDL.Raw.Mixer.addEffect" "Mix_RegisterEffect"
+  else
+    return . liftIO $ do -- The unregister action.
+      removed <- SDL.Raw.Mixer.unregisterEffect channel effect'
+      freeHaskellFunPtr effect'
+      freeHaskellFunPtr finished'
+      when (removed == 0) $
+        throwFailed "SDL.Raw.Mixer.removeEffect" "Mix_UnregisterEffect"
+
 -- Effects
--- TODO: registerEffect
--- TODO: unregisterEffect
--- TODO: unregisterAllEffects
 -- TODO: setPostMix
 -- TODO: setPanning
 -- TODO: setDistance
