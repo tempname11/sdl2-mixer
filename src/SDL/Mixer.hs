@@ -1026,7 +1026,11 @@ throwFailed caller rawfunc =
   liftIO $ throwIO =<< SDLCallFailed caller rawfunc <$> getError
 
 -- | A post-processing effect as a function operating on a mutable stream.
-type Effect = Channel -> IOVector Word8 -> IO ()
+--
+-- _Note that, at the moment, this is a stream of bytes. Depending on the
+-- 'Audio' 'Format' you're using, you're probably going to want to treat is as
+-- a stream of 16-bit values instead._
+type Effect = Channel -> IOVector Word8 -> IO () -- TODO: Don't hardcode Word8.
 
 -- | A function called when a processor is finished being used.
 --
