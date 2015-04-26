@@ -142,8 +142,8 @@ module SDL.Raw.Mixer
   -- * Effects
   , Effect
   , wrapEffect
-  , EffectCleanup
-  , wrapEffectCleanup
+  , EffectFinished
+  , wrapEffectFinished
   , registerEffect
   , pattern CHANNEL_POST
   , unregisterEffect
@@ -474,13 +474,13 @@ type Effect = Channel -> Ptr () -> CInt -> Ptr() -> IO ()
 foreign import ccall "wrapper"
   wrapEffect :: Effect -> IO (FunPtr Effect)
 
-type EffectCleanup = Channel -> Ptr () -> IO ()
+type EffectFinished = Channel -> Ptr () -> IO ()
 
 foreign import ccall "wrapper"
-  wrapEffectCleanup :: EffectCleanup -> IO (FunPtr EffectCleanup)
+  wrapEffectFinished :: EffectFinished -> IO (FunPtr EffectFinished)
 
 liftF "registerEffect" "Mix_RegisterEffect"
-  [t|Channel -> FunPtr Effect -> FunPtr EffectCleanup -> Ptr () -> IO CInt|]
+  [t|Channel -> FunPtr Effect -> FunPtr EffectFinished -> Ptr () -> IO CInt|]
 
 liftF "unregisterEffect" "Mix_UnregisterEffect"
   [t|Channel -> FunPtr Effect -> IO CInt|]
