@@ -1061,6 +1061,8 @@ effect (Channel channel) fin ef = do
 
   if result == 0 then
     throwFailed "SDL.Raw.Mixer.addEffect" "Mix_RegisterEffect"
+    freeHaskellFunPtr ef'
+    freeHaskellFunPtr fin'
   else
     return . liftIO $ do -- The unregister action.
       removed <- SDL.Raw.Mixer.unregisterEffect channel ef'
