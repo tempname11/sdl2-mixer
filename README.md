@@ -5,8 +5,8 @@
 #### Haskell bindings to SDL2_mixer
 
 Both the raw and the higher level bindings should allow you to use any aspect
-of the original SDL2_ttf library. Please report an issue if you encounter a bug
-or feel that something is missing.
+of the original SDL2_mixer library. Please report an issue if you encounter a
+bug or feel that something is missing.
 
 ##### Install
 
