@@ -1039,7 +1039,7 @@ type EffectFinished = Channel -> IO ()
 
 -- | A way to refer to the special 'Channel' used for post-processing effects.
 --
--- You can only use this value when applying an 'Effect'.
+-- You can only use this value with 'effect'.
 pattern PostProcessing = SDL.Raw.Mixer.CHANNEL_POST :: Channel
 
 -- | Adds a post-processing 'Effect' to a certain 'Channel'.
