@@ -150,6 +150,7 @@ module SDL.Mixer
   , addEffect
   , Effect
   , EffectFinished
+  , pattern PostProcessing
 
   -- * Other
   , initialize
@@ -1031,6 +1032,11 @@ type Effect = Channel -> IOVector Word8 -> IO ()
 --
 -- This allows you to clean up any state you might have had.
 type EffectFinished = Channel -> IO ()
+
+-- | A way to refer to the special 'Channel' used for post-processing effects.
+--
+-- You can only use this value when applying an 'Effect'.
+pattern PostProcessing = SDL.Raw.Mixer.CHANNEL_POST :: Channel
 
 -- | Adds a post-processing 'Effect' to a certain 'Channel'.
 --
