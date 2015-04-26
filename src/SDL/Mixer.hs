@@ -156,6 +156,7 @@ module SDL.Mixer
   , effectPan
   , effectDistance
   , effectPosition
+  , effectReverseStereo
 
   -- * Other
   , initialize
@@ -1120,6 +1121,18 @@ effectPosition channel@(Channel c) angle dist = do
   void . throwIf0 "SDL.Raw.Mixer.effectPosition" "Mix_SetPosition" $
     SDL.Raw.Mixer.setPosition c angle dist
   return . void $ effectPosition channel 0 0
+
+-- | Swaps the left and right channel sound.
+--
+-- If given 'True', will swap the sound channels.
+--
+-- Returns an action that, when executed, removes this effect. That action
+-- simply calls 'effectReverseStereo' with 'False'.
+effectReverseStereo :: MonadIO m => Channel -> Bool -> m (m ())
+effectReverseStereo channel@(Channel c) rev = do
+  void . throwIf0 "SDL.Raw.Mixer.effectReverseStereo" "Mix_SetReverseStereo" $
+    SDL.Raw.Mixer.setReverseStereo c (if rev then 1 else 0)
+  return . void $ effectReverseStereo channel False
 
 -- Effects
 -- TODO: setPostMix
