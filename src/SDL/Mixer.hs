@@ -1022,11 +1022,6 @@ whenMusicFinished callback = liftIO $ do
   when (lastFunPtr /= nullFunPtr) $ freeHaskellFunPtr lastFunPtr
   writeIORef musicFinishedFunPtr callbackRaw
 
--- Music
--- TODO: hookMusic
--- TODO: setMusicCMD
--- TODO: getMusicHookData
-
 -- Allows us to just throw an SDL exception directly.
 throwFailed :: MonadIO m => Text -> Text -> m a
 throwFailed caller rawfunc =
@@ -1134,10 +1129,13 @@ effectReverseStereo channel@(Channel c) rev = do
     SDL.Raw.Mixer.setReverseStereo c (if rev then 1 else 0)
   return . void $ effectReverseStereo channel False
 
+-- Music
+-- TODO: hookMusic
+-- TODO: setMusicCMD
+-- TODO: getMusicHookData
+
 -- Effects
 -- TODO: setPostMix
--- TODO: setPosition
--- TODO: setReverseStereo
 
 -- SoundFonts
 -- TODO: setSynchroValue
