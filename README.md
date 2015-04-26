@@ -8,7 +8,7 @@ The raw bindings are complete, but the higher-level ones are still missing the
 following functionality:
 
 * _using external or custom music players_,
-* _effects_, and
+* _using in-built effects_, and
 * _sound font support_.
 
 Please report an issue if you encounter a bug or feel something is missing.
@@ -47,6 +47,7 @@ cabal run sdl2-mixer-basic <file>
 cabal run sdl2-mixer-raw <file>
 cabal run sdl2-mixer-music <file>
 cabal run sdl2-mixer-jumbled <file1> ... <fileN>
+cabal run sdl2-mixer-effect <file>
 ```
 
 ##### Miscellaneous tips
