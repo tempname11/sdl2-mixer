@@ -6,16 +6,16 @@ license:       BSD3
 license-file:  LICENSE
 author:        Vladimir Semyonov <tempname011@gmail.com>
                Siniša Biđin <sinisa@bidin.eu>
-maintainer:    Vladimir Semyonov <tempname011@gmail.com>
+maintainer:    Siniša Biđin <sinisa@bidin.eu>
 copyright:     Copyright © 2015 Vladimir Semyonov
                Copyright © 2015 Siniša Biđin
 category:      Sound, Foreign
 build-type:    Simple
 cabal-version: >=1.10
 
--- source-repository head
---   type:     git
---   location: https://github.com/tempname011/sdl2-image.git
+source-repository head
+  type:     git
+  location: https://github.com/sbidin/sdl2-mixer.git
 
 library
   ghc-options: -Wall
