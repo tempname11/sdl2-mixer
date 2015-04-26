@@ -155,6 +155,7 @@ module SDL.Mixer
   -- ** In-built effects
   , effectPan
   , effectDistance
+  , effectPosition
 
   -- * Other
   , initialize
@@ -173,6 +174,7 @@ import Data.ByteString (ByteString, readFile)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Data.Default.Class (Default(def))
 import Data.Foldable (foldl)
+import Data.Int (Int16)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.Text (Text)
 import Data.Vector.Storable.Mutable (IOVector, unsafeFromForeignPtr0)
@@ -1103,6 +1105,21 @@ effectDistance channel@(Channel c) dist = do
   void . throwIf0 "SDL.Raw.Mixer.effectDistance" "Mix_SetDistance" $
     SDL.Raw.Mixer.setDistance c dist
   return . void $ effectDistance channel 0
+
+-- | Simulates a simple 3D audio effect.
+--
+-- Accepts the angle in degrees (as 'Int16') in relation to the source of the
+-- sound (0 is directly in front, 90 directly to the right, and so on) and a
+-- distance (as 'Word8') from the source of the sound (where 255 is very far
+-- away, and 0 extremely close).
+--
+-- Returns an action that, when executed, removes this effect. That action
+-- simply calls 'effectPosition' with both angle and distance set to 0.
+effectPosition :: MonadIO m => Channel -> Int16 -> Word8 -> m (m ())
+effectPosition channel@(Channel c) angle dist = do
+  void . throwIf0 "SDL.Raw.Mixer.effectPosition" "Mix_SetPosition" $
+    SDL.Raw.Mixer.setPosition c angle dist
+  return . void $ effectPosition channel 0 0
 
 -- Effects
 -- TODO: setPostMix
