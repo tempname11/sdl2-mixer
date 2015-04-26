@@ -147,10 +147,10 @@ module SDL.Mixer
   , whenMusicFinished
 
   -- * Effects
-  , addEffect
   , Effect
   , EffectFinished
   , pattern PostProcessing
+  , effect
 
   -- * Other
   , initialize
@@ -1047,25 +1047,25 @@ pattern PostProcessing = SDL.Raw.Mixer.CHANNEL_POST :: Channel
 -- A `Channel`'s 'Effect's are called in the order they were added.
 --
 -- Returns an action that, when executed, removes this 'Effect'.
-addEffect :: MonadIO m => Channel -> EffectFinished -> Effect -> m (m ())
-addEffect (Channel channel) finished effect = do
+effect :: MonadIO m => Channel -> EffectFinished -> Effect -> m (m ())
+effect (Channel channel) fin ef = do
 
-  effect' <- liftIO $ SDL.Raw.Mixer.wrapEffect $ \c p len _ -> do
+  ef' <- liftIO $ SDL.Raw.Mixer.wrapEffect $ \c p len _ -> do
     fp <- castForeignPtr <$> newForeignPtr_ p
-    effect (Channel c) . unsafeFromForeignPtr0 fp $ fromIntegral len
+    ef (Channel c) . unsafeFromForeignPtr0 fp $ fromIntegral len
 
-  finished' <- liftIO $ SDL.Raw.Mixer.wrapEffectFinished $ \c _ ->
-    finished $ Channel c
+  fin' <- liftIO $ SDL.Raw.Mixer.wrapEffectFinished $ \c _ ->
+    fin $ Channel c
 
-  result <- SDL.Raw.Mixer.registerEffect channel effect' finished' nullPtr
+  result <- SDL.Raw.Mixer.registerEffect channel ef' fin' nullPtr
 
   if result == 0 then
     throwFailed "SDL.Raw.Mixer.addEffect" "Mix_RegisterEffect"
   else
     return . liftIO $ do -- The unregister action.
-      removed <- SDL.Raw.Mixer.unregisterEffect channel effect'
-      freeHaskellFunPtr effect'
-      freeHaskellFunPtr finished'
+      removed <- SDL.Raw.Mixer.unregisterEffect channel ef'
+      freeHaskellFunPtr ef'
+      freeHaskellFunPtr fin'
       when (removed == 0) $
         throwFailed "SDL.Raw.Mixer.removeEffect" "Mix_UnregisterEffect"
 
