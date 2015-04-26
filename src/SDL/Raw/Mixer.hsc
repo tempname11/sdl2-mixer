@@ -140,6 +140,10 @@ module SDL.Raw.Mixer
   , getMusicHookData
 
   -- * Effects
+  , Effect
+  , wrapEffect
+  , EffectCleanup
+  , wrapEffectCleanup
   , registerEffect
   , pattern CHANNEL_POST
   , unregisterEffect
@@ -465,17 +469,21 @@ liftF "getMusicHookData" "Mix_GetMusicHookData"
 
 pattern CHANNEL_POST = (#const MIX_CHANNEL_POST)
 
+type Effect = Channel -> Ptr () -> CInt -> Ptr() -> IO ()
+
+foreign import ccall "wrapper"
+  wrapEffect :: Effect -> IO (FunPtr Effect)
+
+type EffectCleanup = Channel -> Ptr () -> IO ()
+
+foreign import ccall "wrapper"
+  wrapEffectCleanup :: EffectCleanup -> IO (FunPtr EffectCleanup)
+
 liftF "registerEffect" "Mix_RegisterEffect"
-  [t|Channel ->
-     FunPtr (Channel -> Ptr () -> CInt -> Ptr () -> IO ()) ->
-     FunPtr (Channel -> Ptr () -> IO ()) ->
-     Ptr () ->
-     IO CInt|]
+  [t|Channel -> FunPtr Effect -> FunPtr EffectCleanup -> Ptr () -> IO CInt|]
 
 liftF "unregisterEffect" "Mix_UnregisterEffect"
-  [t|Channel ->
-     FunPtr (Channel -> Ptr () -> CInt -> Ptr () -> IO ()) ->
-     IO CInt|]
+  [t|Channel -> FunPtr Effect -> IO CInt|]
 
 liftF "unregisterAllEffects" "Mix_UnregisterAllEffects"
   [t|Channel -> IO CInt|]
