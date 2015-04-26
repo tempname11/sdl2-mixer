@@ -4,14 +4,9 @@
 
 #### Haskell bindings to SDL2_mixer
 
-The raw bindings are complete, but the higher-level ones are still missing the
-following functionality:
-
-* _using external or custom music players_,
-* _using in-built effects_, and
-* _sound font support_.
-
-Please report an issue if you encounter a bug or feel something is missing.
+Both the raw and the higher level bindings should allow you to use any aspect
+of the original SDL2_ttf library. Please report an issue if you encounter a bug
+or feel that something is missing.
 
 ##### Install
 
