@@ -386,7 +386,7 @@ class Loadable a where
 
   -- | Frees the value's memory. It should no longer be used.
   --
-  -- __Note that you shouldn't free those values that are currently playing__.
+  -- __Note that you shouldn't free those values that are currently playing.__
   free :: MonadIO m => a -> m ()
 
 -- | A volume, where 0 is silent and 128 loudest.
@@ -1029,9 +1029,9 @@ throwFailed caller rawfunc =
 
 -- | A post-processing effect as a function operating on a mutable stream.
 --
--- _Note that, at the moment, this is a stream of bytes. Depending on the
--- 'Audio' 'Format' you're using, you're probably going to want to treat is as
--- a stream of 16-bit values instead._
+-- __Note that, at the moment, this is a stream of bytes. Depending on the__
+-- __'Audio' 'Format' you're using, you're probably going to want to treat is__
+-- __as a stream of 16-bit values instead.__
 type Effect = Channel -> IOVector Word8 -> IO () -- TODO: Don't hardcode Word8.
 
 -- | A function called when a processor is finished being used.
@@ -1049,8 +1049,8 @@ pattern PostProcessing = SDL.Raw.Mixer.CHANNEL_POST :: Channel
 --
 -- A `Channel`'s 'Effect's are called in the order they were added.
 --
--- Returns an action that, when executed, removes this 'Effect'. _Note: do not
--- execute this returned action more than once._
+-- Returns an action that, when executed, removes this 'Effect'. __Note: do__
+-- __execute this returned action more than once.__
 effect :: MonadIO m => Channel -> EffectFinished -> Effect -> m (m ())
 effect (Channel channel) fin ef = do
 
