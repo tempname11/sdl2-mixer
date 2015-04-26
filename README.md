@@ -30,7 +30,7 @@ Note that you might get compile errors if you're not using the latest GHC. Only
 
 ##### Documentation
 
-You can find the temporary documentation [here](https://bidin.eu/docs/sdl2-mixer).
+You can find the documentation [here](https://bidin.eu/docs/sdl2-mixer).
 
 The
 [original SDL2_mixer documentation](http://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html)
