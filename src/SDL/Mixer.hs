@@ -152,6 +152,9 @@ module SDL.Mixer
   , pattern PostProcessing
   , effect
 
+  -- ** In-built effects
+  , effectPan
+
   -- * Other
   , initialize
   , InitFlag(..)
@@ -1046,7 +1049,8 @@ pattern PostProcessing = SDL.Raw.Mixer.CHANNEL_POST :: Channel
 --
 -- A `Channel`'s 'Effect's are called in the order they were added.
 --
--- Returns an action that, when executed, removes this 'Effect'.
+-- Returns an action that, when executed, removes this 'Effect'. _Note: do not
+-- execute this returned action more than once._
 effect :: MonadIO m => Channel -> EffectFinished -> Effect -> m (m ())
 effect (Channel channel) fin ef = do
 
@@ -1068,6 +1072,26 @@ effect (Channel channel) fin ef = do
       freeHaskellFunPtr ef' >> freeHaskellFunPtr fin'
       when (removed == 0) $
         throwFailed "SDL.Raw.Mixer.removeEffect" "Mix_UnregisterEffect"
+
+-- | Same as 'effect', but applies an in-built effect implementing panning.
+--
+-- Sets the left-channel and right-channel 'Volume' to the given values.
+--
+-- This only works when `Audio`'s 'Output' is 'Stereo', which is the default.
+--
+-- Returns an action that, when executed, removes this 'Effect'.
+effectPan :: MonadIO m => Channel -> Volume -> Volume -> m (m ())
+effectPan (Channel c) lVol rVol = do
+  result <- SDL.Raw.Mixer.setPanning c (wordVol lVol) (wordVol rVol)
+  if result == 0 then
+    throwFailed "SDL.Raw.Mixer.effectPan" "Mix_SetPanning"
+  else
+    return . void $ SDL.Raw.Mixer.setPanning c 255 255
+  where
+    wordVol :: Volume -> Word8
+    wordVol = fromIntegral . min 255 . (*2) . volumeToCInt
+
+
 
 -- Effects
 -- TODO: setPostMix

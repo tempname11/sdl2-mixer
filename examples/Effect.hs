@@ -38,17 +38,22 @@ runExample :: FilePath -> IO ()
 runExample path = do
 
   -- Add effects, get back effect removal actions.
-  -- The volume should be EIGHT times as low after this.
+  -- The volume should be FOUR times as low after this.
   popEffects <-
     mapM (Mix.effect Mix.PostProcessing (\_ -> return ()) . const)
-         [halveVolume, halveVolume, halveVolume]
+         [halveVolume, halveVolume]
+
+  -- Then give the left channel louder music than the right one.
+  popPan <- Mix.effectPan Mix.PostProcessing 128 64
 
   music <- Mix.load path
   Mix.playMusic Mix.Once music
 
   delayWhile Mix.playingMusic
 
-  sequence_ popEffects -- The effects are no longer applied after this.
+  -- The effects are no longer applied after this.
+  sequence_ $ popPan : popEffects
+
   Mix.free music
 
 delayWhile :: IO Bool -> IO ()
