@@ -166,7 +166,7 @@ module SDL.Mixer
 
   ) where
 
-import Control.Exception.Lifted (finally, throwIO)
+import Control.Exception.Lifted (finally)
 import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
@@ -175,21 +175,19 @@ import Data.ByteString (ByteString, readFile)
 import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
 import Data.Default.Class (Default(def))
 import Data.Foldable (foldl)
-import Data.Int (Int16)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import Data.Text (Text)
+import Data.Int (Int16)
 import Data.Vector.Storable.Mutable (IOVector, unsafeFromForeignPtr0)
 import Data.Word (Word8)
 import Foreign.C.String (peekCString)
 import Foreign.C.Types (CInt)
-import Foreign.Marshal.Alloc (alloca)
 import Foreign.ForeignPtr (newForeignPtr_, castForeignPtr)
-import Foreign.Ptr (Ptr, castPtr, nullPtr)
+import Foreign.Marshal.Alloc (alloca)
 import Foreign.Ptr (FunPtr, nullFunPtr, freeHaskellFunPtr)
+import Foreign.Ptr (Ptr, castPtr, nullPtr)
 import Foreign.Storable (Storable(..))
 import Prelude hiding (foldl, readFile)
-import SDL.Exception (throwIfNeg_, throwIf_, throwIf0, throwIfNull, throwIfNeg)
-import SDL.Exception (SDLException(SDLCallFailed), getError)
+import SDL.ExceptionHelper
 import SDL.Raw.Filesystem (rwFromConstMem)
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -1021,11 +1019,6 @@ whenMusicFinished callback = liftIO $ do
   lastFunPtr <- readIORef musicFinishedFunPtr
   when (lastFunPtr /= nullFunPtr) $ freeHaskellFunPtr lastFunPtr
   writeIORef musicFinishedFunPtr callbackRaw
-
--- Allows us to just throw an SDL exception directly.
-throwFailed :: MonadIO m => Text -> Text -> m a
-throwFailed caller rawfunc =
-  liftIO $ throwIO =<< SDLCallFailed caller rawfunc <$> getError
 
 -- | A post-processing effect as a function operating on a mutable stream.
 --
