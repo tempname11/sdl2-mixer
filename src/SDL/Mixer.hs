@@ -6,10 +6,13 @@ module SDL.Mixer (
   openAudio,
   querySpec,
   load,
+  decode,
   play,
   playChannel,
   playing,
   playingCount,
+  haltChannel,
+  haltAllChannels,
   freeChunk,
   closeAudio,
 
@@ -28,7 +31,10 @@ module SDL.Mixer (
 import Prelude hiding (foldl)
 import Control.Applicative
 import Control.Monad.IO.Class
+import Control.Monad (void)
 import Data.Bits
+import Data.ByteString hiding (foldl)
+import Data.ByteString.Unsafe
 import Data.Foldable
 import Foreign.C.String
 import Foreign.C.Types
@@ -36,6 +42,7 @@ import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
 import SDL.Exception
+import SDL.Raw.Filesystem (rwFromConstMem)
 
 import qualified SDL.Raw.Mixer as Raw
 
@@ -61,10 +68,10 @@ instance RawConversion InitFlag where
   toRaw InitMP3 = Raw.MIX_INIT_MP3
   toRaw InitOGG = Raw.MIX_INIT_OGG
   fromRaw r = case r of
-    r' | r' == Raw.MIX_INIT_FLAC -> InitFLAC 
-       | r' == Raw.MIX_INIT_MOD  -> InitMOD 
-       | r' == Raw.MIX_INIT_MP3  -> InitMP3 
-       | r' == Raw.MIX_INIT_OGG  -> InitOGG 
+    r' | r' == Raw.MIX_INIT_FLAC -> InitFLAC
+       | r' == Raw.MIX_INIT_MOD  -> InitMOD
+       | r' == Raw.MIX_INIT_MP3  -> InitMP3
+       | r' == Raw.MIX_INIT_OGG  -> InitOGG
        | otherwise               -> error "Raw InitFlag not recognized"
 
 initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
@@ -103,16 +110,16 @@ instance RawConversion Format where
   toRaw FormatU16_Sys = Raw.AUDIO_U16SYS
   toRaw FormatS16_Sys = Raw.AUDIO_S16SYS
   fromRaw r = case r of
-    r' | r' == Raw.AUDIO_U8     -> FormatU8 
-       | r' == Raw.AUDIO_S8     -> FormatS8 
-       | r' == Raw.AUDIO_U16LSB -> FormatU16_LSB 
-       | r' == Raw.AUDIO_S16LSB -> FormatS16_LSB 
-       | r' == Raw.AUDIO_U16MSB -> FormatU16_MSB 
-       | r' == Raw.AUDIO_S16MSB -> FormatS16_MSB 
-       | r' == Raw.AUDIO_U16    -> FormatU16 
-       | r' == Raw.AUDIO_S16    -> FormatS16 
-       | r' == Raw.AUDIO_U16SYS -> FormatU16_Sys 
-       | r' == Raw.AUDIO_S16SYS -> FormatS16_Sys 
+    r' | r' == Raw.AUDIO_U8     -> FormatU8
+       | r' == Raw.AUDIO_S8     -> FormatS8
+       | r' == Raw.AUDIO_U16LSB -> FormatU16_LSB
+       | r' == Raw.AUDIO_S16LSB -> FormatS16_LSB
+       | r' == Raw.AUDIO_U16MSB -> FormatU16_MSB
+       | r' == Raw.AUDIO_S16MSB -> FormatS16_MSB
+       | r' == Raw.AUDIO_U16    -> FormatU16
+       | r' == Raw.AUDIO_S16    -> FormatS16
+       | r' == Raw.AUDIO_U16SYS -> FormatU16_Sys
+       | r' == Raw.AUDIO_S16SYS -> FormatS16_Sys
        | otherwise              -> error "Raw Format not recognized"
 
 defaultSpec :: AudioSpec
@@ -171,6 +178,14 @@ load filePath =
       liftIO $ withCString filePath $ \cstr ->
         Raw.loadWav cstr
 
+decode :: (Functor m, MonadIO m) => ByteString -> m Chunk
+decode bytes = liftIO $ do
+  unsafeUseAsCStringLen bytes $ \(cstr, len) -> do
+    rw <- rwFromConstMem (castPtr cstr) (fromIntegral len)
+    fmap Chunk .
+      throwIfNull "SDL.Mixer.decode" "Mix_LoadWAV_RW" $
+        Raw.loadWavRW rw 0
+
 newtype Channel = Channel CInt
 
 data ChannelChoice
@@ -202,16 +217,20 @@ playChannel channel chunk loops =
                            | otherwise -> error "Invalid Repeat value"
 
 playing :: (Functor m, MonadIO m) => Channel -> m Bool
-playing channel =
+playing (Channel c) =
   fmap (> 0) $
-    Raw.playing channel'
-  where
-    Channel channel' = channel
+    Raw.playing c
 
 playingCount :: (Functor m, MonadIO m) => m Int
 playingCount =
   fmap fromIntegral $
     Raw.playing (-1)
+
+haltChannel :: (Functor m, MonadIO m) => Channel -> m ()
+haltChannel (Channel c) = void $ Raw.haltChannel c
+
+haltAllChannels :: (Functor m, MonadIO m) => m ()
+haltAllChannels = void $ Raw.haltChannel (-1)
 
 freeChunk :: MonadIO m => Chunk -> m ()
 freeChunk chunk = Raw.freeChunk chunk'
