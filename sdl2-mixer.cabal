@@ -1,5 +1,5 @@
 name:                sdl2-mixer
-version:             0.1.0
+version:             0
 synopsis:            Both high- and low-level bindings to the SDL_mixer library (version 2.0.0).
 description:
   This package contains bindings to the SDL_mixer 2 library, in both high- and
@@ -38,7 +38,8 @@ library
 
   build-depends:
     base >= 4.7 && < 5,
-    sdl2 >= 2.0.0,
+    sdl2 == 0,
+    bytestring,
     transformers >= 0.2 && < 0.5
 
   default-language:
@@ -47,7 +48,7 @@ library
 executable example-basic-raw
   build-depends:
     base >= 4.7 && < 5,
-    sdl2 >= 2.0.0,
+    sdl2,
     sdl2-mixer
 
   hs-source-dirs: examples
@@ -58,7 +59,7 @@ executable example-basic-raw
 executable example-basic
   build-depends:
     base >= 4.7 && < 5,
-    sdl2 >= 2.0.0,
+    sdl2,
     sdl2-mixer
 
   hs-source-dirs: examples
