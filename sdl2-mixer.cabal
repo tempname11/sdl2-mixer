@@ -52,7 +52,7 @@ library
     sdl2               >= 2.0.0,
     template-haskell,
     text               >= 1.2,
-    transformers       >= 0.2 && < 0.5,
+    transformers       >= 0.2 && < 0.6,
     vector             >= 0.10
 
   default-language:
