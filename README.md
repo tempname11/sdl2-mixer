@@ -1,5 +1,6 @@
 # sdl2-mixer
 
+[![Hackage](https://img.shields.io/hackage/v/lens.svg)](https://github.com/sbidin/sdl2-mixer)
 [![Build Status](https://travis-ci.org/sbidin/sdl2-mixer.svg?branch=master)](https://travis-ci.org/sbidin/sdl2-mixer)
 
 #### Haskell bindings to SDL2_mixer
@@ -16,7 +17,7 @@ cabal install sdl2-mixer
 
 ##### Documentation
 
-For documentations, [visit Hackage](https://hackage.haskell.org/package/sdl2-mixer).
+For documentation, [visit Hackage](https://hackage.haskell.org/package/sdl2-mixer).
 
 The
 [original SDL2_mixer documentation](http://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html)
