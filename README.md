@@ -1,6 +1,6 @@
 # sdl2-mixer
 
-[![Hackage](https://img.shields.io/hackage/v/lens.svg)](https://github.com/sbidin/sdl2-mixer)
+[![Hackage](https://img.shields.io/hackage/v/lens.svg)](https://hackage.haskell.org/package/sdl2-mixer)
 [![Build Status](https://travis-ci.org/sbidin/sdl2-mixer.svg?branch=master)](https://travis-ci.org/sbidin/sdl2-mixer)
 
 #### Haskell bindings to SDL2_mixer
