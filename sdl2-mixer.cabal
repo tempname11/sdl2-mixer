@@ -60,7 +60,7 @@ library
 
 flag example
   description: Build the example executables
-  default:     True
+  default:     False
 
 executable sdl2-mixer-basic
   ghc-options: -Wall
