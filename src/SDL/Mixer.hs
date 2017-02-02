@@ -202,7 +202,7 @@ import qualified SDL.Raw.Mixer
 -- format. Using 'initialize' allows you to decide /when/ to load support.
 --
 -- You may call this function multiple times.
-initialize :: (Foldable f, Functor m, MonadIO m) => f InitFlag -> m ()
+initialize :: (Foldable f, MonadIO m) => f InitFlag -> m ()
 initialize flags = do
   let raw = foldl (\a b -> a .|. initToCInt b) 0 flags
   throwIf_ ((/= raw) . (.&. raw)) "SDL.Mixer.initialize" "Mix_Init" $
