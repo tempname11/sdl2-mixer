@@ -166,6 +166,7 @@ module SDL.Mixer
 
   ) where
 
+import Control.Exception (throwIO)
 import Control.Exception.Lifted (finally)
 import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -187,7 +188,8 @@ import Foreign.Ptr (FunPtr, nullFunPtr, freeHaskellFunPtr)
 import Foreign.Ptr (Ptr, castPtr, nullPtr)
 import Foreign.Storable (Storable(..))
 import Prelude hiding (foldl, readFile)
-import SDL.ExceptionHelper
+import SDL (SDLException(SDLCallFailed))
+import SDL.Internal.Exception
 import SDL.Raw.Filesystem (rwFromConstMem)
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -1057,14 +1059,18 @@ effect (Channel channel) fin ef = do
   result <- SDL.Raw.Mixer.registerEffect channel ef' fin' nullPtr
 
   if result == 0 then do
-    liftIO $ freeHaskellFunPtr ef' >> freeHaskellFunPtr fin'
-    throwFailed "SDL.Raw.Mixer.addEffect" "Mix_RegisterEffect"
+    liftIO $ do
+      freeHaskellFunPtr ef' >> freeHaskellFunPtr fin'
+      err <- getError
+      throwIO $ SDLCallFailed "SDL.Raw.Mixer.addEffect" "Mix_RegisterEffect" err
   else
     return . liftIO $ do -- The unregister action.
       removed <- SDL.Raw.Mixer.unregisterEffect channel ef'
       freeHaskellFunPtr ef' >> freeHaskellFunPtr fin'
-      when (removed == 0) $
-        throwFailed "SDL.Raw.Mixer.removeEffect" "Mix_UnregisterEffect"
+      when (removed == 0) $ do
+        err <- getError
+        throwIO $
+          SDLCallFailed "SDL.Raw.Mixer.removeEffect" "Mix_UnregisterEffect" err
 
 -- | Applies an in-built effect implementing panning.
 --
