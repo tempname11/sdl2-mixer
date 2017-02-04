@@ -1,11 +1,11 @@
 import qualified SDL.Raw.Mixer as Mix
 import qualified SDL
 
-import Control.Applicative
-import Foreign.C.String
-import Foreign.Ptr
-import System.Environment
-import System.Exit
+import Control.Monad      (unless, when)
+import Foreign.C.String   (withCString)
+import Foreign.Ptr        (nullPtr)
+import System.Environment (getArgs)
+import System.Exit        (exitFailure)
 
 main :: IO ()
 main = do
@@ -13,14 +13,14 @@ main = do
   fileName <- do
     args <- getArgs
     case args of
-      [arg] -> return arg
+      (arg:_) -> return arg
       _ -> do
-        putStrLn "Usage: <cmd> <sound filename>"
-        exitWith $ ExitFailure 1
+        putStrLn "Usage: cabal run sdl2-mixer-raw <sound filename>"
+        exitFailure
 
   -- initialize libraries
   SDL.initialize [SDL.InitAudio]
-  _ <- Mix.init Mix.MIX_INIT_MP3
+  _ <- Mix.init Mix.INIT_MP3
 
   let rate = 22050
       format = Mix.AUDIO_S16SYS
@@ -32,9 +32,9 @@ main = do
   assert $ result == 0
 
   -- open file
-  sound <- withCString fileName $ \cstr -> Mix.loadWav cstr
+  sound <- withCString fileName $ \cstr -> Mix.loadWAV cstr
   assert $ sound /= nullPtr
-  
+
   -- play file
   channel <- Mix.playChannel (-1) sound 0
   assert $ channel /= -1
@@ -53,13 +53,9 @@ main = do
   SDL.quit
 
 assert :: Bool -> IO ()
-assert x = if x
-           then return ()
-           else error "Assertion failed"
+assert = flip unless $ error "Assertion failed"
 
 whileTrueM :: Monad m => m Bool -> m ()
 whileTrueM cond = do
   loop <- cond
-  if loop then whileTrueM cond
-          else return ()
-
+  when loop $ whileTrueM cond

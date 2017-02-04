@@ -1,16 +1,38 @@
 # sdl2-mixer
 
-This is a very early, incomplete version of Haskell bindings to [SDL_mixer](https://www.libsdl.org/projects/SDL_mixer/), version 2.0, intended for use with the [sdl2 package](https://github.com/haskell-game/sdl2), specifically the *new-api* branch. The goal for this library is for it to look like (and work seamlessly with) *sdl2*.
+[![Hackage](https://img.shields.io/hackage/v/sdl2-mixer.svg)](https://hackage.haskell.org/package/sdl2-mixer)
+[![Build Status](https://travis-ci.org/sbidin/sdl2-mixer.svg?branch=master)](https://travis-ci.org/sbidin/sdl2-mixer)
 
-More or less all of the C API is exposed in the low-level bindings, [SDL.Raw.Mixer](src/SDL/Raw/Mixer.hs) module.
+#### Haskell bindings to SDL2_mixer
 
-Only a small fraction of the API is exposed in the high-level bindings, [SDL.Mixer](src/SDL/Mixer.hs) module at the moment, but it's enough to read sound files from disk and play them at will, which is the most important thing, really.
+Both the raw and the higher level bindings should allow you to use any aspect
+of the original SDL2_mixer library. Please report an issue if you encounter a
+bug or feel that something is missing.
 
-I will be updating this library as I go along in making my own (undisclosed yet) game. If _(or rather, when)_ something you need is missing, feel free to add the functionality and make a pull request. It'd be greatly appreciated.
+##### Install
 
-As the library matures a bit and the API becomes more or less fixed, I intend to upload this package to Hackage.
+```bash
+cabal install sdl2-mixer
+```
 
-# Some misc. tips:
+##### Documentation
 
-1. Take a look at [a basic usage example](examples/Basic.hs) [(also the raw API version)](examples/BasicRaw.hs). I think it looks pretty clean.
-2. In order for SDL_mixer to play MP3 files, you need the SMPEG library installed, and SDL_mixer to be configured with the support for it. On Mac OS X, this meant I couldn't use the sdl2_mixer package from [homebrew](http://brew.sh/), and had to install both libraries manually.
+For documentation, [visit Hackage](https://hackage.haskell.org/package/sdl2-mixer).
+
+The
+[original SDL2_mixer documentation](http://www.libsdl.org/projects/SDL_mixer/docs/SDL_mixer.html)
+can also help, as the bindings are close to a direct mapping.
+
+##### Examples
+
+Several example executables are included with the library. You can find them in
+the `examples` directory.
+
+```bash
+cd sdl2-mixer
+cabal run sdl2-mixer-basic <file>
+cabal run sdl2-mixer-raw <file>
+cabal run sdl2-mixer-music <file>
+cabal run sdl2-mixer-jumbled <file1> ... <fileN>
+cabal run sdl2-mixer-effect <file>
+```
